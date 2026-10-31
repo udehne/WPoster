@@ -28,6 +28,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -82,6 +83,7 @@ fun SettingsScreen(
     var checking by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
     var confirmLogout by remember { mutableStateOf(false) }
+    var help by remember { mutableStateOf<FieldHelp?>(null) }
     val scope = rememberCoroutineScope()
 
     val canCheck = url.isNotBlank() && user.isNotBlank() && password.isNotBlank() && !checking
@@ -123,12 +125,14 @@ fun SettingsScreen(
                 value = url, onValueChange = { url = it; result = null },
                 label = { Text("Adresse") }, placeholder = { Text("https://beispiel.de") },
                 singleLine = true,
+                trailingIcon = { InfoButton { help = FieldHelp.URL } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 value = user, onValueChange = { user = it; result = null },
                 label = { Text("Benutzername") }, singleLine = true,
+                trailingIcon = { InfoButton { help = FieldHelp.USER } },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -140,8 +144,11 @@ fun SettingsScreen(
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 trailingIcon = {
-                    TextButton(onClick = { showPassword = !showPassword }) {
-                        Text(if (showPassword) "Verbergen" else "Zeigen")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = { showPassword = !showPassword }) {
+                            Text(if (showPassword) "Verbergen" else "Zeigen")
+                        }
+                        InfoButton { help = FieldHelp.PASSWORD }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -202,7 +209,10 @@ fun SettingsScreen(
                 }
             }
 
-            SectionLabel("Fotos")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SectionLabel("Fotos", Modifier.weight(1f))
+                InfoButton { help = FieldHelp.IMAGE_SIZE }
+            }
             Text(
                 "Maximale Kantenlänge beim Hochladen. Standort und andere Metadaten werden immer entfernt.",
                 style = MaterialTheme.typography.bodySmall,
@@ -227,6 +237,7 @@ fun SettingsScreen(
                     maxUpload.toIntOrNull()?.let { repository.setMaxUploadMb(it) }
                 },
                 label = { Text("Maximale Dateigröße (MB)") },
+                trailingIcon = { InfoButton { help = FieldHelp.MAX_UPLOAD } },
                 supportingText = { Text("Siehe WordPress → Medien → Datei hinzufügen.") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -257,6 +268,16 @@ fun SettingsScreen(
         }
     }
 
+    help?.let { h ->
+        AlertDialog(
+            onDismissRequest = { help = null },
+            icon = { Icon(Icons.Default.Info, null) },
+            title = { Text(h.title) },
+            text = { Text(h.text) },
+            confirmButton = { TextButton(onClick = { help = null }) { Text("Verstanden") } },
+        )
+    }
+
     if (confirmLogout) {
         AlertDialog(
             onDismissRequest = { confirmLogout = false },
@@ -283,4 +304,54 @@ private fun LegalLink(text: String, onClick: () -> Unit) {
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         modifier = Modifier.clickable(onClick = onClick),
     )
+}
+
+@Composable
+private fun InfoButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(Icons.Default.Info, contentDescription = "Hilfe", tint = MaterialTheme.colorScheme.outline)
+    }
+}
+
+/** Kurze Hilfetexte zu den Einrichtungsfeldern. */
+private enum class FieldHelp(val title: String, val text: String) {
+    URL(
+        "Adresse der WordPress-Seite",
+        "Die Adresse, unter der dein Blog im Browser erreichbar ist, z. B. „https://udehne.de“.\n\n" +
+            "Am einfachsten: Blog im Browser öffnen und die Adresse aus der Adresszeile kopieren – " +
+            "ohne „/wp-admin“ oder Unterseiten. „https://“ ergänzt die App bei Bedarf selbst."
+    ),
+    USER(
+        "Benutzername",
+        "Dein WordPress-Anmeldename – also der Name, mit dem du dich unter „/wp-admin“ anmeldest " +
+            "(nicht der angezeigte Name).\n\n" +
+            "Zu finden in WordPress unter Benutzer → Profil → „Benutzername“ (ganz oben, grau, nicht änderbar). " +
+            "Der Benutzer braucht mindestens die Rolle „Autor“."
+    ),
+    PASSWORD(
+        "Anwendungspasswort",
+        "Nicht dein normales WordPress-Passwort, sondern ein eigenes Passwort nur für diese App.\n\n" +
+            "So erstellst du es:\n" +
+            "1. Im Browser bei WordPress anmelden (…/wp-admin).\n" +
+            "2. Links auf Benutzer → Profil.\n" +
+            "3. Ganz nach unten zu „Anwendungspasswörter“ scrollen.\n" +
+            "4. Namen eingeben, z. B. „WordPREST Handy“, und „Neues Anwendungspasswort hinzufügen“ tippen.\n" +
+            "5. Das angezeigte Passwort (24 Zeichen in 6 Gruppen) kopieren und hier einfügen. " +
+            "Es wird nur einmal angezeigt; Leerzeichen sind egal.\n\n" +
+            "Fehlt der Abschnitt, ist die Funktion auf deiner Seite deaktiviert (z. B. durch ein Sicherheits-Plugin). " +
+            "Widerrufen kannst du das Passwort jederzeit an derselben Stelle."
+    ),
+    IMAGE_SIZE(
+        "Bildgröße",
+        "Fotos werden vor dem Hochladen auf diese maximale Kantenlänge verkleinert. Das spart Zeit, " +
+            "mobiles Datenvolumen und Speicherplatz auf dem Server.\n\n" +
+            "2560 px (Standard) ist für Blog-Fotos – auch auf großen Bildschirmen – völlig ausreichend. " +
+            "Standort (GPS) und andere Metadaten werden in jedem Fall entfernt."
+    ),
+    MAX_UPLOAD(
+        "Maximale Dateigröße",
+        "Die größte Datei, die dein Server annimmt. Größere Videos weist die App schon vor dem Hochladen ab.\n\n" +
+            "Zu finden in WordPress unter Medien → Datei hinzufügen: Dort steht „Maximale Dateigröße für Uploads: … MB“. " +
+            "Diesen Wert hier eintragen."
+    ),
 }
