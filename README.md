@@ -206,7 +206,8 @@ git tag v1.0
 git push origin v1.0
 ```
 
-Manuell starten: Actions → „Android-APK bauen“ → **Run workflow**.
+Oder ohne Kommandozeile: Actions → „Android-APK bauen“ → **Run workflow** →
+bei *release_tag* z. B. `v1.1` eintragen → **Run workflow**. Ohne Eintrag entsteht nur ein Artefakt.
 
 ### Signierschlüssel (wichtig für Updates)
 
