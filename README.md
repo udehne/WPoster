@@ -26,6 +26,15 @@ Adresse und Zugangsdaten gibst du nach der Installation in der App ein.
 
 ## 1. Was die App kann
 
+- **Startseite:** Titel und Untertitel deines Blogs, darunter die neuesten Beiträge
+  mit Beitragsbild, Titel, Autor und Datum. Zum Aktualisieren nach unten ziehen;
+  ältere Beiträge werden beim Scrollen nachgeladen.
+- **Beitragsansicht:** Der komplette Beitrag mit allen Texten, Fotos und Videos.
+  Unten: **Übersicht**, **Älterer**, **Neuerer** Beitrag und **Bearbeiten**.
+- **Beiträge bearbeiten:** Überschrift, Texte und Zwischenüberschriften ändern,
+  Fotos/Videos hinzufügen, verschieben und entfernen, Beitragsbild wählen (⭐)
+  und das **Veröffentlichungsdatum** ändern (bestimmt die Reihenfolge).
+- **Menü ☰:** Hilfe, Einstellungen, Impressum, Datenschutz.
 - **Teilen aus der Galerie:** Fotos/Videos in Google Fotos, der Samsung-Galerie o. Ä.
   auswählen, dann **Teilen → WordPREST**. Der Upload startet sofort, und du tippst
   währenddessen Überschrift und Texte ein.
@@ -131,10 +140,32 @@ deines Blogs und deines Benutzers, und die App ist bereit.
 
 ### Weg 2: In der App
 
-1. App öffnen → **Neuer Beitrag**.
+1. App öffnen → großes **+** unten rechts.
 2. **Hinzufügen** → Fotos/Videos auswählen (mehrere möglich, auch nachträglich weitere).
 3. Überschrift und Texte eingeben → **Veröffentlichen**.
 4. Danach: **Beitrag ansehen** oder **Weiteren Beitrag anlegen**.
+
+### Beitrag ansehen und bearbeiten
+
+1. Auf der Startseite einen Beitrag antippen. Er wird vollständig angezeigt.
+2. Mit **Älterer** und **Neuerer** blätterst du durch die Beiträge, **Übersicht** führt zurück zur Liste.
+3. **Bearbeiten** öffnet den Editor:
+   - **Überschrift** und **Veröffentlichungsdatum** (Tippen auf das Datum → Tag und Uhrzeit wählen).
+     Ein Datum in der Zukunft plant den Beitrag, er ist dann erst ab diesem Zeitpunkt sichtbar.
+   - **Inhalt:** Jeder Absatz, jede Zwischenüberschrift und jedes Foto/Video ist ein eigener
+     Block. Mit ▲▼ verschieben, mit ✕ entfernen.
+   - **Hinzufügen:** Text, Titel (Zwischenüberschrift) oder Medien (Fotos/Videos werden sofort hochgeladen).
+   - **⭐** an einem Foto macht es zum Beitragsbild.
+4. **Speichern**. Danach siehst du den aktualisierten Beitrag.
+
+Gut zu wissen:
+- Inhalte, die die App nicht bearbeiten kann (z. B. Galerien oder Spalten aus dem
+  Web-Editor), bleiben unverändert erhalten und lassen sich nur verschieben oder entfernen.
+- Absätze mit Formatierungen (z. B. Links, fett) bleiben erhalten, solange du sie nicht
+  änderst. Änderst du den Text, wird er als einfacher Text gespeichert.
+- Aus einem Beitrag entfernte Fotos bleiben in der WordPress-Mediathek.
+- Eigene Beiträge darf jeder **Autor** bearbeiten. Für Beiträge anderer Personen braucht
+  der WordPress-Benutzer die Rolle **Redakteur** oder **Administrator**.
 
 ### Tipps
 
@@ -147,7 +178,7 @@ deines Blogs und deines Benutzers, und die App ist bereit.
 
 ## 6. Einstellungen
 
-Über das ⚙︎-Symbol auf der Startseite.
+Über das Menü **☰** oben links → **Einstellungen**.
 
 | Einstellung | Bedeutung |
 |---|---|
@@ -166,6 +197,8 @@ deines Blogs und deines Benutzers, und die App ist bereit.
 | **„Keine Berechtigung …“** | Der WordPress-Benutzer braucht mindestens die Rolle **Autor**. |
 | **„Datei ist zu groß“** | Video kürzen oder das Upload-Limit beim Hoster erhöhen und in den Einstellungen anpassen. |
 | **„Beitrag ansehen“ zeigt die Anmeldeseite** | Wenn dein Blog nur für angemeldete Benutzer sichtbar ist: im Browser einmal anmelden, danach bleibt die Anmeldung meist erhalten. |
+| **„Du darfst diesen Beitrag nicht bearbeiten“** | Der Beitrag stammt von einer anderen Person. Dafür braucht dein Benutzer die Rolle **Redakteur** (WordPress → Benutzer → Rolle ändern). |
+| **Bilder in der Liste fehlen** | Manche Schutz-Plugins sperren auch Bilddateien für Apps. Im Plugin den Ordner `wp-content/uploads` freigeben. |
 | **Update lässt sich nicht installieren** („Konflikt mit vorhandenem Paket“) | Die Versionen wurden mit unterschiedlichen Schlüsseln signiert. App einmal deinstallieren und neu installieren, dann Zugangsdaten neu eingeben. Dauerhafte Lösung: [Abschnitt 9](#9-für-entwickler-bauen--signieren). |
 
 ### .htaccess-Anpassung (z. B. bei IONOS)
@@ -240,6 +273,7 @@ Dann unter GitHub → **Settings → Secrets and variables → Actions → New r
 Voraussetzung: JDK 17 und Android SDK (z. B. über Android Studio).
 
 ```bash
+./gradlew testReleaseUnitTest   # Unit-Tests (Block-Parser/-Builder)
 ./gradlew assembleRelease
 # APK: app/build/outputs/apk/release/app-release.apk
 ```
@@ -255,12 +289,17 @@ app/src/main/java/de/formerdehne/wordprest/
 ├── data/
 │   ├── WpClient.kt            REST-API: Verbindung prüfen, Medien hochladen, Beitrag anlegen
 │   ├── MediaPreparer.kt       Fotos verkleinern/Metadaten entfernen, Videos umkopieren
-│   ├── BlockBuilder.kt        Beitragsinhalt im Block-Editor-Format
+│   ├── BlockBuilder.kt        Beitragsinhalt im Block-Editor-Format erzeugen
+│   ├── BlockParser.kt         bestehende Beiträge in Blöcke zerlegen (für den Editor)
+│   ├── MediaUploader.kt       gemeinsamer Upload für Erstellen und Bearbeiten
 │   ├── SettingsRepository.kt  Einstellungen
 │   └── SecretBox.kt           Verschlüsselung über Android-Keystore
 └── ui/
-    ├── screens/               Start, Editor, Einstellungen, Erfolg, Rechtstexte
-    ├── ComposeViewModel.kt    Entwurf, Upload-Warteschlange, Veröffentlichen
+    ├── screens/               Start, Beitrag, Editoren, Einstellungen, Hilfe, Rechtstexte
+    ├── ComposeViewModel.kt    neuer Beitrag: Entwurf, Uploads, Veröffentlichen
+    ├── HomeViewModel.kt       Beitragsliste
+    ├── PostViewModel.kt       Beitragsansicht inkl. älterer/neuerer Beitrag
+    ├── EditViewModel.kt       Beitrag bearbeiten
     ├── NavViewModel.kt        Navigation
     └── theme/                 Farben & Typografie
 ```
