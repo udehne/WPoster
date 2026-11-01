@@ -1,4 +1,4 @@
-# Datenschutzhinweis – WordPREST
+# Datenschutzhinweis – WPoster
 
 ## 1. Verantwortliche
 
@@ -6,7 +6,7 @@ FORMER.DEHNE, Uli Dehne und Simon Former, Waldstraße 3, 22955 Hoisdorf, E-Mail:
 
 ## 2. Das Wichtigste in Kürze
 
-WordPREST überträgt Daten ausschließlich zwischen Ihrem Gerät und der WordPress-Seite, die Sie selbst in der App eintragen. Wir als Anbieter betreiben keinen eigenen Server für die App und erhalten keine Ihrer Daten.
+WPoster überträgt Daten ausschließlich zwischen Ihrem Gerät und der WordPress-Seite, die Sie selbst in der App eintragen. Wir als Anbieter betreiben keinen eigenen Server für die App und erhalten keine Ihrer Daten.
 
 Die App enthält keine Werbung, kein Tracking, keine Analyse-Werkzeuge und keine Absturzberichte an Dritte.
 

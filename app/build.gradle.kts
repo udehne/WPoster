@@ -4,21 +4,23 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// In GitHub Actions wird VERSION_CODE aus der Build-Nummer gesetzt,
-// damit jede neue APK als Update über die alte installiert werden kann.
+// In GitHub Actions wird VERSION_CODE aus der Build-Nummer gesetzt (steigt immer,
+// damit jede neue APK als Update installiert werden kann) und VERSION_NAME aus dem
+// Release-Tag (v1.3 → 1.3). Builds ohne Tag heißen "dev.<Build-Nummer>".
 val ciVersionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+val ciVersionName = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "dev.$ciVersionCode"
 val releaseStoreFile: String? = System.getenv("SIGNING_STORE_FILE")
 
 android {
-    namespace = "de.formerdehne.wordprest"
+    namespace = "de.formerdehne.wposter"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "de.formerdehne.wordprest"
+        applicationId = "de.formerdehne.wposter"
         minSdk = 28
         targetSdk = 35
         versionCode = ciVersionCode
-        versionName = "1.0.$ciVersionCode"
+        versionName = ciVersionName
     }
 
     signingConfigs {

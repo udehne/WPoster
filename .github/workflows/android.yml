@@ -38,6 +38,16 @@ jobs:
             echo "::warning::Kein KEYSTORE_BASE64-Secret hinterlegt – APK wird mit einem Debug-Schlüssel signiert. Updates erfordern dann eine Neuinstallation (siehe README)."
           fi
 
+      - name: Versionsnummer bestimmen
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || (startsWith(github.ref, 'refs/tags/v') && github.ref_name) || '' }}
+        run: |
+          if [ -n "$RELEASE_TAG" ]; then
+            echo "VERSION_NAME=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+          else
+            echo "VERSION_NAME=dev.${{ github.run_number }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Testen und APK bauen
         env:
           VERSION_CODE: ${{ github.run_number }}
@@ -48,12 +58,12 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon testReleaseUnitTest assembleRelease
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk "dist/WordPREST-1.0.${VERSION_CODE}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "dist/WPoster-${VERSION_NAME}.apk"
 
       - name: APK als Artefakt hochladen
         uses: actions/upload-artifact@v4
         with:
-          name: WordPREST-1.0.${{ github.run_number }}
+          name: WPoster-${{ env.VERSION_NAME }}
           path: dist/*.apk
           retention-days: 90
 
@@ -62,7 +72,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag || github.ref_name }}
-          name: WordPREST ${{ inputs.release_tag || github.ref_name }}
+          name: WPoster ${{ inputs.release_tag || github.ref_name }}
           target_commitish: ${{ github.sha }}
           files: dist/*.apk
           generate_release_notes: true

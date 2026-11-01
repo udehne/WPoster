@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "WordPREST"
+rootProject.name = "WPoster"
 include(":app")

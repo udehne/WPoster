@@ -10,13 +10,13 @@
     </queries>
 
     <application
-        android:name=".WordPrestApp"
+        android:name=".WPosterApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.WordPrest">
+        android:theme="@style/Theme.WPoster">
 
         <activity
             android:name=".MainActivity"

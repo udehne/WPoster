@@ -1,8 +1,8 @@
-# WordPREST
+# WPoster
 
 **Fotos und Videos vom Handy direkt als Beitrag auf deinem WordPress-Blog veröffentlichen.**
 
-WordPREST ist eine schlanke Android-App für private (Familien-)Blogs. Du wählst
+WPoster ist eine schlanke Android-App für private (Familien-)Blogs. Du wählst
 Fotos oder Videos aus, gibst eine Überschrift und optional Texte ein, und mit einem
 Tipp ist der Beitrag online. Die App funktioniert mit jeder WordPress-Seite.
 Adresse und Zugangsdaten gibst du nach der Installation in der App ein.
@@ -20,7 +20,8 @@ Adresse und Zugangsdaten gibst du nach der Installation in der App ein.
 7. [Hilfe bei Problemen](#7-hilfe-bei-problemen)
 8. [Datenschutz & Sicherheit](#8-datenschutz--sicherheit)
 9. [Für Entwickler: Bauen & Signieren](#9-für-entwickler-bauen--signieren)
-10. [Impressum](#10-impressum)
+10. [Lizenz](#10-lizenz)
+11. [Impressum](#11-impressum)
 
 ---
 
@@ -38,7 +39,7 @@ Adresse und Zugangsdaten gibst du nach der Installation in der App ein.
 - **Kalender:** Monatsansicht, in der Tage mit Beiträgen markiert und antippbar sind.
 - **Menü ☰:** Suche, Kalender, Hilfe, Einstellungen, Impressum, Datenschutz.
 - **Teilen aus der Galerie:** Fotos/Videos in Google Fotos, der Samsung-Galerie o. Ä.
-  auswählen, dann **Teilen → WordPREST**. Der Upload startet sofort, und du tippst
+  auswählen, dann **Teilen → WPoster**. Der Upload startet sofort, und du tippst
   währenddessen Überschrift und Texte ein.
 - **Beitrag in der App anlegen:** App öffnen → **Neuer Beitrag** → Fotos/Videos hinzufügen.
 - **Aufbau jedes Beitrags** (Block-Editor):
@@ -77,7 +78,7 @@ APK-Datei bereitgestellt.
 ### Variante A: Release (empfohlen, am einfachsten auf dem Handy)
 
 1. Auf dem Handy die GitHub-Seite des Projekts öffnen → **Releases**.
-2. Beim neuesten Release die Datei **`WordPREST-1.0.x.apk`** antippen und herunterladen.
+2. Beim neuesten Release die Datei **`WPoster-1.0.x.apk`** antippen und herunterladen.
 3. Die heruntergeladene Datei öffnen. Beim ersten Mal fragt Android, ob der Browser
    „Apps aus unbekannten Quellen installieren“ darf. Das einmal erlauben.
 4. **Installieren** antippen.
@@ -85,7 +86,7 @@ APK-Datei bereitgestellt.
 ### Variante B: Artefakt aus einem Build
 
 1. GitHub → **Actions** → Workflow **„Android-APK bauen“** → neuesten grünen Lauf öffnen.
-2. Unten unter **Artifacts** die Datei **`WordPREST-1.0.x`** herunterladen
+2. Unten unter **Artifacts** die Datei **`WPoster-1.0.x`** herunterladen
    (dafür muss man bei GitHub angemeldet sein).
 3. Es ist ein **ZIP**. Entpacken (z. B. mit der App „Dateien“), dann die APK
    öffnen und installieren wie oben.
@@ -109,7 +110,7 @@ eigenes Passwort nur für diese App und lässt sich jederzeit widerrufen.
 1. Im Browser (gern am Computer) bei WordPress anmelden: `https://deine-seite.de/wp-admin`
 2. Links im Menü **Benutzer → Profil**.
 3. Ganz nach unten scrollen bis **„Anwendungspasswörter“**.
-4. Bei **„Name des neuen Anwendungspassworts“** z. B. `WordPREST Handy Uli` eingeben.
+4. Bei **„Name des neuen Anwendungspassworts“** z. B. `WPoster Handy Uli` eingeben.
 5. **„Neues Anwendungspasswort hinzufügen“** klicken.
 6. Das angezeigte Passwort (24 Zeichen, z. B. `abcd EFGH 1234 ijkl MNOP 5678`) kopieren.
    **Es wird nur dieses eine Mal angezeigt.** Du kannst es dir z. B. per Mail selbst
@@ -134,7 +135,7 @@ deines Blogs und deines Benutzers, und die App ist bereit.
 ### Weg 1: Aus der Galerie teilen
 
 1. In deiner Foto-App ein oder mehrere Fotos/Videos auswählen.
-2. **Teilen** → **WordPREST** antippen.
+2. **Teilen** → **WPoster** antippen.
 3. Die App öffnet den Editor und **lädt sofort hoch**. Den Fortschritt siehst du an jedem Bild.
 4. Währenddessen **Überschrift** und optional **Text vor** und **Text nach den Fotos** eingeben.
 5. Sobald alles hochgeladen ist: **Veröffentlichen**.
@@ -244,6 +245,10 @@ Jeder Push baut über GitHub Actions (`.github/workflows/android.yml`) eine
 Release-APK und lädt sie als **Artefakt** hoch (90 Tage verfügbar). Die
 Versionsnummer ergibt sich aus der Build-Nummer.
 
+Die **Versionsnummer** der App ergibt sich aus dem Release-Tag (`v1.3` → Version 1.3).
+Builds ohne Tag heißen `dev.<Build-Nummer>`. Der interne Versionscode ist die
+fortlaufende Build-Nummer, damit jede neue APK als Update installierbar ist.
+
 Ein **Release** mit direkt herunterladbarer APK entsteht durch einen Tag:
 
 ```bash
@@ -263,9 +268,9 @@ Debug-Schlüssel. Dann muss die App vor jedem Update deinstalliert werden.
 Einmalig einen Schlüssel erzeugen:
 
 ```bash
-keytool -genkeypair -keystore wordprest.jks -storetype PKCS12 -alias wordprest \
+keytool -genkeypair -keystore wposter.jks -storetype PKCS12 -alias wposter \
   -keyalg RSA -keysize 4096 -validity 36500
-base64 -w0 wordprest.jks      # Ausgabe ist der Wert für KEYSTORE_BASE64
+base64 -w0 wposter.jks      # Ausgabe ist der Wert für KEYSTORE_BASE64
 ```
 
 Dann unter GitHub → **Settings → Secrets and variables → Actions → New repository secret** anlegen:
@@ -274,7 +279,7 @@ Dann unter GitHub → **Settings → Secrets and variables → Actions → New r
 |---|---|
 | `KEYSTORE_BASE64` | Base64-Text der `.jks`-Datei |
 | `SIGNING_STORE_PASSWORD` | Keystore-Passwort |
-| `SIGNING_KEY_ALIAS` | `wordprest` |
+| `SIGNING_KEY_ALIAS` | Alias aus dem `keytool`-Befehl (z. B. `wposter`) |
 | `SIGNING_KEY_PASSWORD` | Schlüssel-Passwort (bei PKCS12 identisch mit dem Keystore-Passwort) |
 
 `.jks`-Datei und Passwörter sicher aufbewahren (z. B. im Passwortmanager) und
@@ -297,7 +302,7 @@ Voraussetzung: JDK 17 und Android SDK (z. B. über Android Studio).
 - minSdk 28 (Android 9), targetSdk 35
 
 ```
-app/src/main/java/de/formerdehne/wordprest/
+app/src/main/java/de/formerdehne/wposter/
 ├── data/
 │   ├── WpClient.kt            REST-API: Verbindung prüfen, Medien hochladen, Beitrag anlegen
 │   ├── MediaPreparer.kt       Fotos verkleinern/Metadaten entfernen, Videos umkopieren
@@ -318,10 +323,17 @@ app/src/main/java/de/formerdehne/wordprest/
     └── theme/                 Farben & Typografie
 ```
 
-## 10. Impressum
+## 10. Lizenz
+
+WPoster ist freie Software unter der **GNU General Public License v3.0** (siehe [LICENSE](LICENSE)).
+Du darfst die App nutzen, weitergeben und verändern. Wer eine veränderte Fassung
+weitergibt, muss deren Quellcode ebenfalls unter der GPL-3.0 veröffentlichen.
+Die App wird ohne jede Gewährleistung bereitgestellt.
+
+## 11. Impressum
 
 FORMER.DEHNE · Uli Dehne und Simon Former · Waldstraße 3 · 22955 Hoisdorf ·
 kontakt@former-dehne.de. Vollständig: [docs/IMPRESSUM.md](docs/IMPRESSUM.md)
 
-*WordPress ist eine eingetragene Marke der WordPress Foundation. WordPREST ist ein
+*WordPress ist eine eingetragene Marke der WordPress Foundation. WPoster ist ein
 unabhängiges Projekt ohne Verbindung zur WordPress Foundation oder zu Automattic.*
