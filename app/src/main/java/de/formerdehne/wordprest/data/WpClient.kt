@@ -120,15 +120,27 @@ class WpClient(private val credentials: Credentials) {
         )
     }
 
-    /** Neueste Beiträge zuerst. Liefert eine leere Liste hinter der letzten Seite. */
-    suspend fun listPosts(page: Int, perPage: Int = 20): List<PostSummary> {
-        val query = mapOf(
-            "per_page" to perPage.toString(),
-            "page" to page.toString(),
-            "orderby" to "date",
-            "order" to "desc",
-            "_embed" to "author,wp:featuredmedia",
-        )
+    /**
+     * Neueste Beiträge zuerst. Liefert eine leere Liste hinter der letzten Seite.
+     * [search] durchsucht Überschrift und Text; [after]/[before] grenzen den Zeitraum ein (exklusiv).
+     */
+    suspend fun listPosts(
+        page: Int,
+        perPage: Int = 20,
+        search: String? = null,
+        after: String? = null,
+        before: String? = null,
+    ): List<PostSummary> {
+        val query = buildMap {
+            put("per_page", perPage.toString())
+            put("page", page.toString())
+            put("orderby", "date")
+            put("order", "desc")
+            put("_embed", "author,wp:featuredmedia")
+            if (!search.isNullOrBlank()) put("search", search.trim())
+            if (after != null) put("after", after)
+            if (before != null) put("before", before)
+        }
         val body = try {
             postsQuery(query)
         } catch (e: WpException) {

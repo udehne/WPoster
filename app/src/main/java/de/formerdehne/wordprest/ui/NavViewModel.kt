@@ -12,6 +12,8 @@ sealed interface Screen {
     data object Compose : Screen
     data object Settings : Screen
     data object Success : Screen
+    data object Search : Screen
+    data object Calendar : Screen
     data class Post(val id: Long) : Screen
     data class Edit(val id: Long) : Screen
     data class Doc(val doc: InfoDoc) : Screen

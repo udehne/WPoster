@@ -34,7 +34,9 @@ Adresse und Zugangsdaten gibst du nach der Installation in der App ein.
 - **Beiträge bearbeiten:** Überschrift, Texte und Zwischenüberschriften ändern,
   Fotos/Videos hinzufügen, verschieben und entfernen, Beitragsbild wählen (⭐)
   und das **Veröffentlichungsdatum** ändern (bestimmt die Reihenfolge).
-- **Menü ☰:** Hilfe, Einstellungen, Impressum, Datenschutz.
+- **Suche:** Überschriften und Texte aller Beiträge durchsuchen, die Treffer erscheinen als Liste.
+- **Kalender:** Monatsansicht, in der Tage mit Beiträgen markiert und antippbar sind.
+- **Menü ☰:** Suche, Kalender, Hilfe, Einstellungen, Impressum, Datenschutz.
 - **Teilen aus der Galerie:** Fotos/Videos in Google Fotos, der Samsung-Galerie o. Ä.
   auswählen, dann **Teilen → WordPREST**. Der Upload startet sofort, und du tippst
   währenddessen Überschrift und Texte ein.
@@ -167,6 +169,16 @@ Gut zu wissen:
 - Eigene Beiträge darf jeder **Autor** bearbeiten. Für Beiträge anderer Personen braucht
   der WordPress-Benutzer die Rolle **Redakteur** oder **Administrator**.
 
+### Suchen und Kalender
+
+- **☰ → Suche:** Ab zwei Buchstaben wird während des Tippens gesucht, in Überschriften und
+  Texten aller Beiträge. Ein Tipp auf einen Treffer öffnet den Beitrag, „Zurück“ führt
+  wieder zu den Suchergebnissen.
+- **☰ → Kalender:** Tage mit Beiträgen sind farbig markiert, bei mehreren Beiträgen
+  steht die Anzahl darunter. Mit ◀ ▶ wechselst du den Monat. Unter dem Kalender stehen
+  alle Beiträge des Monats. Ein Tipp auf einen markierten Tag zeigt nur dessen Beiträge,
+  ein zweiter Tipp oder „Ganzer Monat“ wieder alle.
+
 ### Tipps
 
 - **Absätze:** Eine Leerzeile im Text erzeugt einen neuen Absatz, ein einfacher
@@ -295,11 +307,13 @@ app/src/main/java/de/formerdehne/wordprest/
 │   ├── SettingsRepository.kt  Einstellungen
 │   └── SecretBox.kt           Verschlüsselung über Android-Keystore
 └── ui/
-    ├── screens/               Start, Beitrag, Editoren, Einstellungen, Hilfe, Rechtstexte
+    ├── screens/               Start, Beitrag, Editoren, Suche, Kalender, Einstellungen, Hilfe, Rechtstexte
     ├── ComposeViewModel.kt    neuer Beitrag: Entwurf, Uploads, Veröffentlichen
     ├── HomeViewModel.kt       Beitragsliste
     ├── PostViewModel.kt       Beitragsansicht inkl. älterer/neuerer Beitrag
     ├── EditViewModel.kt       Beitrag bearbeiten
+    ├── SearchViewModel.kt     Suche
+    ├── CalendarViewModel.kt   Kalender (Beiträge je Monat)
     ├── NavViewModel.kt        Navigation
     └── theme/                 Farben & Typografie
 ```

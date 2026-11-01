@@ -9,7 +9,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.content.IntentCompat
 import de.formerdehne.wordprest.ui.AppRoot
+import de.formerdehne.wordprest.ui.CalendarViewModel
 import de.formerdehne.wordprest.ui.ComposeViewModel
+import de.formerdehne.wordprest.ui.SearchViewModel
 import de.formerdehne.wordprest.ui.EditViewModel
 import de.formerdehne.wordprest.ui.HomeViewModel
 import de.formerdehne.wordprest.ui.PostViewModel
@@ -23,6 +25,8 @@ class MainActivity : ComponentActivity() {
     private val home: HomeViewModel by viewModels()
     private val post: PostViewModel by viewModels()
     private val edit: EditViewModel by viewModels()
+    private val search: SearchViewModel by viewModels()
+    private val calendar: CalendarViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +41,8 @@ class MainActivity : ComponentActivity() {
                     homeVm = home,
                     postVm = post,
                     editVm = edit,
+                    searchVm = search,
+                    calendarVm = calendar,
                     repository = repository,
                 )
             }

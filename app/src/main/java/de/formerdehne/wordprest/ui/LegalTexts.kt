@@ -32,6 +32,22 @@ object LegalTexts {
             )
         ),
         LegalSection(
+            "Suchen",
+            listOf(
+                "Menü ☰ → Suche. Ab zwei Buchstaben werden Überschriften und Texte aller Beiträge durchsucht; " +
+                    "die Treffer erscheinen wie auf der Startseite und lassen sich antippen."
+            )
+        ),
+        LegalSection(
+            "Kalender",
+            listOf(
+                "Menü ☰ → Kalender. Tage mit Beiträgen sind farbig markiert, bei mehreren Beiträgen steht die " +
+                    "Anzahl darunter. Mit den Pfeilen blätterst du durch die Monate.",
+                "Unter dem Kalender stehen alle Beiträge des Monats. Ein Tipp auf einen markierten Tag zeigt nur " +
+                    "dessen Beiträge, ein zweiter Tipp (oder „Ganzer Monat“) wieder alle."
+            )
+        ),
+        LegalSection(
             "Beitrag bearbeiten",
             listOf(
                 "Im Editor kannst du Überschrift, Texte und Zwischenüberschriften ändern, Fotos und Videos " +

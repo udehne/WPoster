@@ -7,7 +7,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.formerdehne.wordprest.data.SettingsRepository
+import de.formerdehne.wordprest.ui.screens.CalendarScreen
 import de.formerdehne.wordprest.ui.screens.ComposeScreen
+import de.formerdehne.wordprest.ui.screens.SearchScreen
 import de.formerdehne.wordprest.ui.screens.EditPostScreen
 import de.formerdehne.wordprest.ui.screens.HomeScreen
 import de.formerdehne.wordprest.ui.screens.LegalScreen
@@ -22,6 +24,8 @@ fun AppRoot(
     homeVm: HomeViewModel,
     postVm: PostViewModel,
     editVm: EditViewModel,
+    searchVm: SearchViewModel,
+    calendarVm: CalendarViewModel,
     repository: SettingsRepository,
 ) {
     val settings by repository.state.collectAsStateWithLifecycle()
@@ -29,6 +33,8 @@ fun AppRoot(
     val home by homeVm.state.collectAsStateWithLifecycle()
     val post by postVm.state.collectAsStateWithLifecycle()
     val edit by editVm.state.collectAsStateWithLifecycle()
+    val search by searchVm.state.collectAsStateWithLifecycle()
+    val calendar by calendarVm.state.collectAsStateWithLifecycle()
     val screen = nav.current
 
     // Nach erfolgreichem Veröffentlichen: Erfolgsseite, Liste aktualisieren.
@@ -53,6 +59,7 @@ fun AppRoot(
         when (screen) {
             is Screen.Post -> postVm.load(screen.id)
             is Screen.Edit -> editVm.start(screen.id)
+            Screen.Calendar -> calendarVm.open()
             else -> Unit
         }
     }
@@ -79,6 +86,27 @@ fun AppRoot(
                 onLoadMore = homeVm::loadMore,
                 onSettings = { nav.push(Screen.Settings) },
                 onDoc = { nav.push(Screen.Doc(it)) },
+                onSearch = { nav.push(Screen.Search) },
+                onCalendar = { nav.push(Screen.Calendar) },
+            )
+            Screen.Search -> SearchScreen(
+                state = search,
+                onBack = { nav.pop() },
+                onQuery = searchVm::setQuery,
+                onSubmit = searchVm::submit,
+                onLoadMore = searchVm::loadMore,
+                onRetry = searchVm::retry,
+                onOpenPost = { nav.push(Screen.Post(it)) },
+            )
+            Screen.Calendar -> CalendarScreen(
+                state = calendar,
+                onBack = { nav.pop() },
+                onPrevious = calendarVm::previousMonth,
+                onNext = calendarVm::nextMonth,
+                onToday = calendarVm::thisMonth,
+                onSelect = calendarVm::select,
+                onRetry = calendarVm::retry,
+                onOpenPost = { nav.push(Screen.Post(it)) },
             )
             Screen.Compose -> ComposeScreen(
                 state = draft,
