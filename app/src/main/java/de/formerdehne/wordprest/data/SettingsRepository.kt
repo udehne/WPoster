@@ -16,6 +16,7 @@ data class Credentials(
 data class AppSettings(
     val credentials: Credentials?,
     val siteName: String?,
+    val siteDescription: String?,
     val displayName: String?,
     val maxImageEdge: Int,
     val maxUploadMb: Int,
@@ -37,28 +38,39 @@ class SettingsRepository(context: Context) {
         return AppSettings(
             credentials = credentials,
             siteName = prefs.getString(KEY_SITE_NAME, null),
+            siteDescription = prefs.getString(KEY_SITE_DESCRIPTION, null),
             displayName = prefs.getString(KEY_DISPLAY_NAME, null),
             maxImageEdge = prefs.getInt(KEY_MAX_EDGE, DEFAULT_MAX_EDGE),
             maxUploadMb = prefs.getInt(KEY_MAX_UPLOAD, DEFAULT_MAX_UPLOAD_MB),
         )
     }
 
-    fun saveCredentials(credentials: Credentials, siteName: String, displayName: String) {
+    fun saveCredentials(credentials: Credentials, siteName: String, siteDescription: String, displayName: String) {
         prefs.edit()
             .putString(KEY_URL, credentials.siteUrl)
             .putString(KEY_USER, credentials.username)
             .putString(KEY_PASSWORD, SecretBox.encrypt(credentials.appPassword))
             .putBoolean(KEY_REST_ROUTE, credentials.useRestRoute)
             .putString(KEY_SITE_NAME, siteName)
+            .putString(KEY_SITE_DESCRIPTION, siteDescription)
             .putString(KEY_DISPLAY_NAME, displayName)
             .apply()
+        _state.value = load()
+    }
+
+    /** Titel/Untertitel des Blogs aktualisieren (z. B. nach Änderung in WordPress). */
+    fun updateSiteMeta(name: String, description: String) {
+        if (name.isBlank()) return
+        val current = _state.value
+        if (current.siteName == name && current.siteDescription == description) return
+        prefs.edit().putString(KEY_SITE_NAME, name).putString(KEY_SITE_DESCRIPTION, description).apply()
         _state.value = load()
     }
 
     fun clearCredentials() {
         prefs.edit()
             .remove(KEY_URL).remove(KEY_USER).remove(KEY_PASSWORD)
-            .remove(KEY_REST_ROUTE).remove(KEY_SITE_NAME).remove(KEY_DISPLAY_NAME)
+            .remove(KEY_REST_ROUTE).remove(KEY_SITE_NAME).remove(KEY_SITE_DESCRIPTION).remove(KEY_DISPLAY_NAME)
             .apply()
         _state.value = load()
     }
@@ -84,6 +96,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_REST_ROUTE = "use_rest_route"
         private const val KEY_SITE_NAME = "site_name"
         private const val KEY_DISPLAY_NAME = "display_name"
+        private const val KEY_SITE_DESCRIPTION = "site_description"
         private const val KEY_MAX_EDGE = "max_image_edge"
         private const val KEY_MAX_UPLOAD = "max_upload_mb"
     }

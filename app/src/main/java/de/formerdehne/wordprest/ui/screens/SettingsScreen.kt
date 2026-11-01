@@ -60,7 +60,7 @@ import de.formerdehne.wordprest.data.AppSettings
 import de.formerdehne.wordprest.data.Credentials
 import de.formerdehne.wordprest.data.SettingsRepository
 import de.formerdehne.wordprest.data.WpClient
-import de.formerdehne.wordprest.ui.LegalDoc
+import de.formerdehne.wordprest.ui.InfoDoc
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,7 +71,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     /** firstSetup = true, wenn die App vorher noch nicht eingerichtet war. */
     onSaved: (firstSetup: Boolean) -> Unit,
-    onLegal: (LegalDoc) -> Unit,
+    onLegal: (InfoDoc) -> Unit,
 ) {
     val creds = settings.credentials
     val wasConfigured = remember { creds != null }
@@ -97,6 +97,7 @@ fun SettingsScreen(
                 repository.saveCredentials(
                     Credentials(info.siteUrl, user.trim(), password.trim(), info.useRestRoute),
                     info.siteName,
+                    info.siteDescription,
                     info.displayName,
                 )
                 url = info.siteUrl
@@ -249,9 +250,9 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                LegalLink("Impressum") { onLegal(LegalDoc.IMPRESSUM) }
+                LegalLink("Impressum") { onLegal(InfoDoc.IMPRESSUM) }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                LegalLink("Datenschutzhinweis") { onLegal(LegalDoc.DATENSCHUTZ) }
+                LegalLink("Datenschutzhinweis") { onLegal(InfoDoc.DATENSCHUTZ) }
             }
 
             if (creds != null) {

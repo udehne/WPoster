@@ -150,7 +150,11 @@ fun ComposeScreen(
                     state.items.forEachIndexed { index, item ->
                         if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         MediaRow(
-                            item = item,
+                            thumbnail = item.uri,
+                            isVideo = item.isVideo,
+                            state = item.state,
+                            progress = item.progress,
+                            error = item.error,
                             canMoveUp = index > 0,
                             canMoveDown = index < state.items.lastIndex,
                             onMove = { onMove(item.key, it) },
@@ -191,97 +195,6 @@ fun ComposeScreen(
             confirmButton = { TextButton(onClick = onDismissError) { Text("OK") } },
         )
     }
-}
-
-@Composable
-private fun MediaRow(
-    item: MediaItem,
-    canMoveUp: Boolean,
-    canMoveDown: Boolean,
-    onMove: (Int) -> Unit,
-    onRemove: () -> Unit,
-    onRetry: () -> Unit,
-) {
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
-            AsyncImage(
-                model = item.uri,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
-            if (item.isVideo) {
-                Surface(
-                    color = Color.Black.copy(alpha = 0.55f),
-                    shape = RoundedCornerShape(50),
-                    modifier = Modifier.align(Alignment.Center).size(26.dp),
-                ) {
-                    Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.padding(3.dp))
-                }
-            }
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                if (item.isVideo) "Video" else "Foto",
-                style = MaterialTheme.typography.titleSmall,
-            )
-            when (item.state) {
-                ItemState.WAITING -> StatusText("Wartet …")
-                ItemState.PREPARING -> {
-                    StatusText(if (item.isVideo) "Wird bereinigt …" else "Wird verkleinert …")
-                    LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 6.dp))
-                }
-                ItemState.UPLOADING -> {
-                    StatusText("Lädt hoch … ${(item.progress * 100).toInt()} %")
-                    LinearProgressIndicator(
-                        progress = { item.progress },
-                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-                    )
-                }
-                ItemState.DONE -> Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    StatusText("Hochgeladen")
-                }
-                ItemState.FAILED -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            item.error ?: "Fehler",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
-                            maxLines = 4,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    TextButton(onClick = onRetry, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
-                        Icon(Icons.Default.Refresh, null, Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Erneut versuchen")
-                    }
-                }
-            }
-        }
-        Column {
-            IconButton(onClick = { onMove(-1) }, enabled = canMoveUp, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.KeyboardArrowUp, "Nach oben")
-            }
-            IconButton(onClick = { onMove(1) }, enabled = canMoveDown, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.KeyboardArrowDown, "Nach unten")
-            }
-        }
-        IconButton(onClick = onRemove) { Icon(Icons.Default.Close, "Entfernen") }
-    }
-}
-
-@Composable
-private fun StatusText(text: String) {
-    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 @Composable

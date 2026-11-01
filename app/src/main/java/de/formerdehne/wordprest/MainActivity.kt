@@ -10,6 +10,9 @@ import androidx.activity.viewModels
 import androidx.core.content.IntentCompat
 import de.formerdehne.wordprest.ui.AppRoot
 import de.formerdehne.wordprest.ui.ComposeViewModel
+import de.formerdehne.wordprest.ui.EditViewModel
+import de.formerdehne.wordprest.ui.HomeViewModel
+import de.formerdehne.wordprest.ui.PostViewModel
 import de.formerdehne.wordprest.ui.NavViewModel
 import de.formerdehne.wordprest.ui.theme.WordPrestTheme
 
@@ -17,6 +20,9 @@ class MainActivity : ComponentActivity() {
 
     private val nav: NavViewModel by viewModels()
     private val draft: ComposeViewModel by viewModels()
+    private val home: HomeViewModel by viewModels()
+    private val post: PostViewModel by viewModels()
+    private val edit: EditViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,7 +31,14 @@ class MainActivity : ComponentActivity() {
         val repository = (application as WordPrestApp).settings
         setContent {
             WordPrestTheme {
-                AppRoot(nav = nav, draftVm = draft, repository = repository)
+                AppRoot(
+                    nav = nav,
+                    draftVm = draft,
+                    homeVm = home,
+                    postVm = post,
+                    editVm = edit,
+                    repository = repository,
+                )
             }
         }
     }

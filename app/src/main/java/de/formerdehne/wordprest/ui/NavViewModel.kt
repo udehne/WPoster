@@ -5,14 +5,16 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.AndroidViewModel
 import de.formerdehne.wordprest.WordPrestApp
 
-enum class LegalDoc { IMPRESSUM, DATENSCHUTZ }
+enum class InfoDoc { HILFE, IMPRESSUM, DATENSCHUTZ }
 
 sealed interface Screen {
     data object Home : Screen
     data object Compose : Screen
     data object Settings : Screen
     data object Success : Screen
-    data class Legal(val doc: LegalDoc) : Screen
+    data class Post(val id: Long) : Screen
+    data class Edit(val id: Long) : Screen
+    data class Doc(val doc: InfoDoc) : Screen
 }
 
 /** Kleine, eigene Navigation mit Zurück-Stapel. */
@@ -34,9 +36,20 @@ class NavViewModel(app: Application) : AndroidViewModel(app) {
         return true
     }
 
+    /** Aktuellen Bildschirm ersetzen (z. B. zum nächsten Beitrag blättern). */
+    fun replaceTop(screen: Screen) {
+        stack[stack.lastIndex] = screen
+    }
+
     fun resetTo(vararg screens: Screen) {
         stack.clear()
         stack.addAll(screens.toList().ifEmpty { listOf(Screen.Home) })
+    }
+
+    /** Nach dem Speichern: Editor schließen und die Beitragsansicht zeigen. */
+    fun finishEdit(id: Long) {
+        if (current is Screen.Edit) pop()
+        if (current != Screen.Post(id)) push(Screen.Post(id))
     }
 
     /** Für geteilte Medien: direkt zum Beitrags-Editor (ohne doppelte Einträge). */

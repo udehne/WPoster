@@ -5,6 +5,72 @@ data class LegalSection(val heading: String?, val body: List<String>)
 
 object LegalTexts {
 
+    val hilfe = listOf(
+        LegalSection(
+            "Neuen Beitrag schreiben",
+            listOf(
+                "Auf der Startseite auf das große + tippen. Fotos und Videos hinzufügen – sie werden sofort " +
+                    "hochgeladen –, eine Überschrift und optional Text vor und nach den Fotos eingeben, dann „Veröffentlichen“.",
+                "Verlässt du den Editor, bleibt der Entwurf erhalten. Er erscheint oben in der Beitragsliste, " +
+                    "wo du ihn fortsetzen oder verwerfen kannst."
+            )
+        ),
+        LegalSection(
+            "Direkt aus der Galerie teilen",
+            listOf(
+                "In Google Fotos, der Galerie o. Ä. Fotos/Videos auswählen, „Teilen“ antippen und WordPREST wählen. " +
+                    "Die App öffnet den Editor und lädt sofort hoch."
+            )
+        ),
+        LegalSection(
+            "Beiträge ansehen",
+            listOf(
+                "Die Startseite zeigt die neuesten Beiträge mit Beitragsbild, Autor und Datum. Zum Aktualisieren " +
+                    "die Liste nach unten ziehen; beim Scrollen werden ältere Beiträge nachgeladen.",
+                "Ein Tipp auf einen Beitrag zeigt ihn vollständig. Unten wechselst du zur Übersicht, zum älteren " +
+                    "oder neueren Beitrag oder in den Editor."
+            )
+        ),
+        LegalSection(
+            "Beitrag bearbeiten",
+            listOf(
+                "Im Editor kannst du Überschrift, Texte und Zwischenüberschriften ändern, Fotos und Videos " +
+                    "hinzufügen, mit ▲▼ verschieben und mit ✕ entfernen.",
+                "Der Stern ☆ an einem Foto macht es zum Beitragsbild (wird in der Übersicht angezeigt).",
+                "Das Veröffentlichungsdatum bestimmt die Reihenfolge der Beiträge. Liegt es in der Zukunft, " +
+                    "wird der Beitrag geplant und erst dann sichtbar.",
+                "Inhalte, die die App nicht bearbeiten kann (z. B. Galerien oder Spalten aus dem Web-Editor), " +
+                    "bleiben unverändert erhalten und lassen sich verschieben oder entfernen.",
+                "Texte mit Formatierungen (z. B. Links) bleiben unverändert, solange du sie nicht änderst. " +
+                    "Änderst du den Text, wird er als einfacher Text gespeichert.",
+                "Aus dem Beitrag entfernte Fotos bleiben in der WordPress-Mediathek erhalten.",
+                "Eigene Beiträge darf jeder Autor bearbeiten. Für Beiträge anderer Personen braucht dein " +
+                    "WordPress-Benutzer die Rolle „Redakteur“ oder „Administrator“."
+            )
+        ),
+        LegalSection(
+            "Datenschutz bei Fotos",
+            listOf(
+                "Vor dem Hochladen entfernt die App den Aufnahmeort (GPS) und andere Metadaten aus Fotos und Videos. " +
+                    "Fotos werden außerdem auf die in den Einstellungen gewählte Größe verkleinert."
+            )
+        ),
+        LegalSection(
+            "Probleme?",
+            listOf(
+                "„Die Anmeldung kommt beim Server nicht an“: Der Webserver entfernt den Anmelde-Header. In die " +
+                    ".htaccess des Blogs gehört oberhalb von „# BEGIN WordPress“ die Zeile:\n" +
+                    "SetEnvIf Authorization \"(.*)\" HTTP_AUTHORIZATION=${'$'}1",
+                "„Benutzername oder Anwendungspasswort ist falsch“: In WordPress unter Benutzer → Profil ein neues " +
+                    "Anwendungspasswort erzeugen und in den Einstellungen eintragen.",
+                "„Datei ist zu groß“: Video kürzen oder das Upload-Limit beim Hoster erhöhen und in den Einstellungen anpassen.",
+                "Bilder werden nicht angezeigt: Manche Schutz-Plugins sperren auch die Bilddateien für Apps. " +
+                    "Dann im Plugin den Ordner wp-content/uploads freigeben.",
+                "Weitere Hilfe: kontakt@former-dehne.de"
+            )
+        ),
+    )
+
     val impressum = listOf(
         LegalSection(
             "Angaben gemäß § 5 DDG",

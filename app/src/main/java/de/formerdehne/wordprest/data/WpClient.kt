@@ -18,6 +18,7 @@ import okhttp3.Response
 import okio.Buffer
 import okio.BufferedSink
 import okio.source
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
@@ -32,7 +33,13 @@ class WpException(
     val notJson: Boolean = false,
 ) : IOException(message)
 
-data class SiteInfo(val siteName: String, val displayName: String, val useRestRoute: Boolean, val siteUrl: String)
+data class SiteInfo(
+    val siteName: String,
+    val siteDescription: String,
+    val displayName: String,
+    val useRestRoute: Boolean,
+    val siteUrl: String,
+)
 
 data class UploadedMedia(
     val id: Long,
@@ -84,9 +91,12 @@ class WpClient(private val credentials: Credentials) {
         }
     }
 
-    /** Prüft die Zugangsdaten und liefert Seitennamen + Anzeigenamen. */
-    suspend fun verify(): Pair<String, String> {
-        val me = JSONObject(execute(request(url("/wp/v2/users/me", mapOf("context" to "edit"))).get().build()))
+    private suspend fun get(route: String, query: Map<String, String> = emptyMap()): String =
+        execute(request(url(route, query)).get().build())
+
+    /** Prüft die Zugangsdaten und liefert Seiten-Infos + Anzeigenamen. */
+    suspend fun verify(): Pair<SiteMeta, String> {
+        val me = JSONObject(get("/wp/v2/users/me", mapOf("context" to "edit")))
         val caps = me.optJSONObject("capabilities")
         if (caps != null) {
             if (!caps.optBoolean("upload_files")) {
@@ -97,12 +107,86 @@ class WpClient(private val credentials: Credentials) {
             }
         }
         val displayName = me.optString("name").ifBlank { credentials.username }
-        val siteName = try {
-            JSONObject(execute(request(url("/")).get().build())).optString("name")
-        } catch (e: Exception) {
-            ""
-        }.ifBlank { credentials.siteUrl.toHttpUrlOrNull()?.host ?: credentials.siteUrl }
-        return siteName to displayName
+        val meta = try { siteMeta() } catch (e: Exception) { SiteMeta("", "") }
+        val name = meta.name.ifBlank { credentials.siteUrl.toHttpUrlOrNull()?.host ?: credentials.siteUrl }
+        return meta.copy(name = name) to displayName
+    }
+
+    suspend fun siteMeta(): SiteMeta {
+        val root = JSONObject(get("/"))
+        return SiteMeta(
+            HtmlText.decode(root.optString("name")).trim(),
+            HtmlText.decode(root.optString("description")).trim(),
+        )
+    }
+
+    /** Neueste Beiträge zuerst. Liefert eine leere Liste hinter der letzten Seite. */
+    suspend fun listPosts(page: Int, perPage: Int = 20): List<PostSummary> {
+        val query = mapOf(
+            "per_page" to perPage.toString(),
+            "page" to page.toString(),
+            "orderby" to "date",
+            "order" to "desc",
+            "_embed" to "author,wp:featuredmedia",
+        )
+        val body = try {
+            postsQuery(query)
+        } catch (e: WpException) {
+            if (e.wpCode == "rest_post_invalid_page_number") return emptyList()
+            throw e
+        }
+        val arr = JSONArray(body)
+        return (0 until arr.length()).map { PostJson.summary(arr.getJSONObject(it)) }
+    }
+
+    /** Abfrage inkl. geplanter Beiträge; fällt auf "nur veröffentlicht" zurück, wenn der Server das ablehnt. */
+    private suspend fun postsQuery(query: Map<String, String>): String {
+        if (includeFuture) {
+            try {
+                return get("/wp/v2/posts", query + ("status" to "publish,future"))
+            } catch (e: WpException) {
+                if (e.wpCode != "rest_invalid_param" && e.wpCode != "rest_forbidden_status") throw e
+                includeFuture = false
+            }
+        }
+        return get("/wp/v2/posts", query)
+    }
+
+    suspend fun getPost(id: Long): PostDetail =
+        PostJson.detail(JSONObject(get("/wp/v2/posts/$id", mapOf("_embed" to "author"))))
+
+    suspend fun getPostForEdit(id: Long): PostEditData = try {
+        PostJson.edit(JSONObject(get("/wp/v2/posts/$id", mapOf("context" to "edit"))))
+    } catch (e: WpException) {
+        if (e.wpCode == "rest_forbidden_context" || e.httpCode == 403) {
+            throw WpException(
+                "Du darfst diesen Beitrag nicht bearbeiten. Beiträge anderer Personen bearbeiten " +
+                    "kann nur ein Benutzer mit der Rolle „Redakteur“ oder „Administrator“."
+            )
+        }
+        throw e
+    }
+
+    /** IDs des nächstälteren und nächstneueren Beitrags. */
+    suspend fun neighbors(dateRaw: String): Pair<Long?, Long?> {
+        val base = mapOf("per_page" to "1", "_fields" to "id", "orderby" to "date")
+        fun first(body: String): Long? =
+            JSONArray(body).optJSONObject(0)?.optLong("id")?.takeIf { it > 0 }
+        val older = first(postsQuery(base + mapOf("before" to dateRaw, "order" to "desc")))
+        val newer = first(postsQuery(base + mapOf("after" to dateRaw, "order" to "asc")))
+        return older to newer
+    }
+
+    suspend fun updatePost(id: Long, title: String, content: String, date: String?, featuredMediaId: Long) {
+        val payload = JSONObject()
+            .put("title", title)
+            .put("content", content)
+            .put("featured_media", featuredMediaId)
+        if (date != null) payload.put("date", date)
+        val req = request(url("/wp/v2/posts/$id"))
+            .post(payload.toString().toRequestBody(JSON))
+            .build()
+        execute(req)
     }
 
     suspend fun uploadMedia(
@@ -159,6 +243,10 @@ class WpClient(private val credentials: Credentials) {
 
     companion object {
         private const val USER_AGENT = "WordPREST/1.0 (Android)"
+
+        /** Wird false, wenn der Server status=publish,future ablehnt. */
+        @Volatile
+        private var includeFuture = true
         private val JSON = "application/json; charset=utf-8".toMediaType()
 
         val http: OkHttpClient = OkHttpClient.Builder()
@@ -188,8 +276,8 @@ class WpClient(private val credentials: Credentials) {
             for (restRoute in listOf(false, true)) {
                 val client = WpClient(Credentials(base, username.trim(), appPassword.trim(), restRoute))
                 try {
-                    val (siteName, displayName) = client.verify()
-                    return SiteInfo(siteName, displayName, restRoute, base)
+                    val (meta, displayName) = client.verify()
+                    return SiteInfo(meta.name, meta.description, displayName, restRoute, base)
                 } catch (e: WpException) {
                     if (e.notJson || e.httpCode == 404) {
                         lastError = e

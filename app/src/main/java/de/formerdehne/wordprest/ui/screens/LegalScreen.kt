@@ -12,14 +12,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import de.formerdehne.wordprest.ui.LegalDoc
+import de.formerdehne.wordprest.ui.InfoDoc
 import de.formerdehne.wordprest.ui.LegalTexts
 
 @Composable
-fun LegalScreen(doc: LegalDoc, onBack: () -> Unit) {
+fun LegalScreen(doc: InfoDoc, onBack: () -> Unit) {
     val (title, sections) = when (doc) {
-        LegalDoc.IMPRESSUM -> "Impressum" to LegalTexts.impressum
-        LegalDoc.DATENSCHUTZ -> "Datenschutzhinweis" to LegalTexts.datenschutz
+        InfoDoc.HILFE -> "Hilfe" to LegalTexts.hilfe
+        InfoDoc.IMPRESSUM -> "Impressum" to LegalTexts.impressum
+        InfoDoc.DATENSCHUTZ -> "Datenschutzhinweis" to LegalTexts.datenschutz
     }
     Scaffold(topBar = { AppTopBar(title, onBack = onBack) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp)) {

@@ -6,7 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import de.formerdehne.wordprest.WordPrestApp
 import de.formerdehne.wordprest.data.BlockBuilder
-import de.formerdehne.wordprest.data.MediaPreparer
+import de.formerdehne.wordprest.data.MediaUploader
 import de.formerdehne.wordprest.data.PublishedPost
 import de.formerdehne.wordprest.data.UploadedMedia
 import de.formerdehne.wordprest.data.WpClient
@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
@@ -52,8 +51,7 @@ data class DraftState(
 class ComposeViewModel(app: Application) : AndroidViewModel(app) {
 
     private val settings = (app as WordPrestApp).settings
-    private val preparer = MediaPreparer(app)
-    private val uploadLock = Mutex()
+    private val uploader = MediaUploader(app, settings)
     private val jobs = HashMap<Long, Job>()
     private var nextKey = 1L
 
@@ -84,45 +82,31 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
         updateItem(key) { it.copy(state = ItemState.WAITING, error = null, progress = 0f) }
         jobs[key] = viewModelScope.launch {
             // Nacheinander hochladen: schont Handy-Akku und Webserver.
-            uploadLock.withLock { upload(key) }
+            uploader.lock.withLock { upload(key) }
         }
     }
 
     private suspend fun upload(key: Long) {
         val item = _state.value.items.find { it.key == key } ?: return
-        val current = settings.state.value
-        val credentials = current.credentials
-        if (credentials == null) {
-            updateItem(key) { it.copy(state = ItemState.FAILED, error = "Bitte zuerst die Zugangsdaten in den Einstellungen eintragen.") }
-            return
-        }
-        var preparedFile: java.io.File? = null
         try {
-            updateItem(key) { it.copy(state = ItemState.PREPARING) }
-            val prepared = preparer.prepare(item.uri, current.maxImageEdge)
-            preparedFile = prepared.file
-            val sizeMb = prepared.file.length() / (1024.0 * 1024.0)
-            if (sizeMb > current.maxUploadMb) {
-                throw IllegalStateException(
-                    "Datei ist zu groß (%.0f MB, erlaubt sind %d MB).".format(sizeMb, current.maxUploadMb)
-                )
-            }
-            updateItem(key) { it.copy(state = ItemState.UPLOADING, progress = 0f) }
             var lastPercent = -1
-            val uploaded = WpClient(credentials).uploadMedia(prepared.file, prepared.mimeType, prepared.fileName) { p ->
-                val percent = (p * 100).toInt()
-                if (percent != lastPercent) {
-                    lastPercent = percent
-                    updateItem(key) { it.copy(progress = p) }
-                }
-            }
+            val uploaded = uploader.upload(
+                item.uri,
+                onPreparing = { updateItem(key) { it.copy(state = ItemState.PREPARING) } },
+                onUploading = { updateItem(key) { it.copy(state = ItemState.UPLOADING, progress = 0f) } },
+                onProgress = { p ->
+                    val percent = (p * 100).toInt()
+                    if (percent != lastPercent) {
+                        lastPercent = percent
+                        updateItem(key) { it.copy(progress = p) }
+                    }
+                },
+            )
             updateItem(key) { it.copy(state = ItemState.DONE, progress = 1f, uploaded = uploaded) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             updateItem(key) { it.copy(state = ItemState.FAILED, error = e.message ?: e.javaClass.simpleName) }
-        } finally {
-            preparedFile?.delete()
         }
     }
 

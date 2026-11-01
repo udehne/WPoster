@@ -25,15 +25,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.text.HtmlCompat
 import de.formerdehne.wordprest.data.PublishedPost
 
 @Composable
-fun SuccessScreen(post: PublishedPost?, onNewPost: () -> Unit, onDone: () -> Unit) {
-    val context = LocalContext.current
+fun SuccessScreen(post: PublishedPost?, onView: (Long) -> Unit, onNewPost: () -> Unit, onDone: () -> Unit) {
     Scaffold { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).padding(horizontal = 24.dp),
@@ -57,8 +55,8 @@ fun SuccessScreen(post: PublishedPost?, onNewPost: () -> Unit, onDone: () -> Uni
                 )
             }
             Spacer(Modifier.height(40.dp))
-            if (post != null && post.link.isNotBlank()) {
-                Button(onClick = { openInBrowser(context, post.link) }, modifier = Modifier.fillMaxWidth().height(52.dp)) {
+            if (post != null) {
+                Button(onClick = { onView(post.id) }, modifier = Modifier.fillMaxWidth().height(52.dp)) {
                     Text("Beitrag ansehen")
                 }
                 Spacer(Modifier.height(12.dp))
@@ -69,7 +67,7 @@ fun SuccessScreen(post: PublishedPost?, onNewPost: () -> Unit, onDone: () -> Uni
                 Text("Weiteren Beitrag anlegen")
             }
             Spacer(Modifier.height(8.dp))
-            TextButton(onClick = onDone) { Text("Zur Startseite") }
+            TextButton(onClick = onDone) { Text("Zur Übersicht") }
         }
     }
 }
