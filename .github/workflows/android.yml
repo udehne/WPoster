@@ -61,7 +61,7 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk "dist/WPoster-${VERSION_NAME}.apk"
 
       - name: APK als Artefakt hochladen
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: WPoster-${{ env.VERSION_NAME }}
           path: dist/*.apk
