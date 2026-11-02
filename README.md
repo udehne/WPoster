@@ -2,10 +2,10 @@
 
 **Fotos und Videos vom Handy direkt als Beitrag auf deinem WordPress-Blog veröffentlichen.**
 
-WPoster ist eine schlanke Android-App für private (Familien-)Blogs. Du wählst
+WPoster ist eine schlanke Android-App für das Befüllen von WordPress-Blogs. Du wählst
 Fotos oder Videos aus, gibst eine Überschrift und optional Texte ein, und mit einem
 Tipp ist der Beitrag online. Die App funktioniert mit jeder WordPress-Seite.
-Adresse und Zugangsdaten gibst du nach der Installation in der App ein.
+Adresse und Zugangsdaten gibst du nach der Installation in der App ein und werden nur lokal bei Dir auf dem Gerät gespeichert.
 
 **⬇️ Download:** [Neueste Version (APK)](https://github.com/udehne/WPoster/releases/latest) · Android 9 oder neuer · Deutsch & English · kostenlos & quelloffen (GPL-3.0)
 
