@@ -8,8 +8,21 @@ sealed interface ParsedBlock {
 
     data class Paragraph(override val raw: String, val text: String, val hasFormatting: Boolean) : ParsedBlock
     data class Heading(override val raw: String, val text: String, val level: Int, val hasFormatting: Boolean) : ParsedBlock
-    data class Image(override val raw: String, val id: Long, val src: String?) : ParsedBlock
-    data class Video(override val raw: String, val id: Long, val src: String?) : ParsedBlock
+    data class Image(
+        override val raw: String,
+        val id: Long,
+        val src: String?,
+        val caption: String = "",
+        val credit: String = "",
+    ) : ParsedBlock
+
+    data class Video(
+        override val raw: String,
+        val id: Long,
+        val src: String?,
+        val caption: String = "",
+        val credit: String = "",
+    ) : ParsedBlock
     /**
      * Nicht bearbeitbarer Block. [blockName] ist der Blockname ohne "core/"-Präfix
      * (z. B. "gallery", "list") bzw. [FREEFORM] für klassischen Inhalt; [imageCount]
@@ -43,6 +56,7 @@ object BlockParser {
     private val imgSrc = Regex("<img\\b[^>]*?\\bsrc=\"([^\"]+)\"", RegexOption.IGNORE_CASE)
     private val videoSrc = Regex("<video\\b[^>]*?\\bsrc=\"([^\"]+)\"", RegexOption.IGNORE_CASE)
     private val wpImageClass = Regex("wp-image-(\\d+)")
+    private val figcaption = Regex("<figcaption\\b[^>]*>(.*?)</figcaption>", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE))
 
     fun parse(content: String): List<ParsedBlock> {
         val out = mutableListOf<ParsedBlock>()
@@ -89,6 +103,19 @@ object BlockParser {
         return out
     }
 
+    /**
+     * Bildunterschrift aus <figcaption> lesen. Eine eigene Zeile, die mit einem der
+     * [BlockBuilder.CREDIT_PREFIXES] beginnt (z. B. "Foto: …"), gilt als Credit.
+     */
+    fun caption(inner: String): Pair<String, String> {
+        val html = figcaption.find(inner)?.groupValues?.get(1) ?: return "" to ""
+        val lines = HtmlText.toPlain(html).lines().map { it.trim() }.filter { it.isNotEmpty() }
+        val creditLine = lines.lastOrNull()?.takeIf { line -> BlockBuilder.CREDIT_PREFIXES.any { line.startsWith(it) } }
+        val credit = creditLine?.substringAfter(':')?.trim().orEmpty()
+        val caption = (if (creditLine != null) lines.dropLast(1) else lines).joinToString("\n")
+        return caption to credit
+    }
+
     private fun freeform(text: String): ParsedBlock? {
         if (text.isBlank()) return null
         return ParsedBlock.Other(text.trim(), ParsedBlock.Other.FREEFORM, 0, excerpt(text))
@@ -113,13 +140,18 @@ object BlockParser {
             "image" -> {
                 val id = attrs?.optLong("id", 0L)?.takeIf { it > 0 }
                     ?: wpImageClass.find(inner)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
-                ParsedBlock.Image(raw, id, imgSrc.find(inner)?.groupValues?.get(1)?.let { HtmlText.decode(it) })
+                val (caption, credit) = caption(inner)
+                ParsedBlock.Image(raw, id, imgSrc.find(inner)?.groupValues?.get(1)?.let { HtmlText.decode(it) }, caption, credit)
             }
-            "video" -> ParsedBlock.Video(
-                raw,
-                attrs?.optLong("id", 0L) ?: 0L,
-                videoSrc.find(inner)?.groupValues?.get(1)?.let { HtmlText.decode(it) }
-            )
+            "video" -> {
+                val (caption, credit) = caption(inner)
+                ParsedBlock.Video(
+                    raw,
+                    attrs?.optLong("id", 0L) ?: 0L,
+                    videoSrc.find(inner)?.groupValues?.get(1)?.let { HtmlText.decode(it) },
+                    caption, credit,
+                )
+            }
             "gallery" -> {
                 val count = imgSrc.findAll(inner).count()
                 ParsedBlock.Other(raw, name, count, "")

@@ -95,4 +95,28 @@ class BlockParserTest {
         assertEquals("Teil <2>", h.text)
         assertEquals(2, h.level)
     }
+
+    @Test
+    fun captionAndCreditRoundTrip() {
+        val m = UploadedMedia(7, "https://x.de/7.jpg", null, isImage = true, isVideo = false)
+        val raw = BlockBuilder.media(m, MediaCaption("Am Strand\nmit Oma", "Uli & Simon"), "Foto:")
+        assertTrue(raw.contains("<figcaption class=\"wp-element-caption\">Am Strand<br>mit Oma<br>Foto: Uli &amp; Simon</figcaption>"))
+        val img = BlockParser.parse(raw).single() as ParsedBlock.Image
+        assertEquals("Am Strand\nmit Oma", img.caption)
+        assertEquals("Uli & Simon", img.credit)
+        assertEquals(7L, img.id)
+    }
+
+    @Test
+    fun replaceCaptionKeepsRestOfBlock() {
+        val m = UploadedMedia(8, "https://x.de/8.jpg", "https://x.de/8-l.jpg", isImage = true, isVideo = false)
+        val raw = BlockBuilder.media(m, MediaCaption("Alt"), "Foto:")
+        val changed = BlockBuilder.replaceCaption(raw, BlockBuilder.captionHtml(MediaCaption("Neu", "Simon"), "Photo:"))
+        val img = BlockParser.parse(changed).single() as ParsedBlock.Image
+        assertEquals("Neu", img.caption)
+        assertEquals("Simon", img.credit)
+        val removed = BlockBuilder.replaceCaption(raw, "")
+        assertFalse(removed.contains("figcaption"))
+        assertTrue(removed.contains("wp-image-8"))
+    }
 }

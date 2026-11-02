@@ -5,13 +5,14 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import de.formerdehne.wposter.R
-import de.formerdehne.wposter.i18n.str
 import de.formerdehne.wposter.WPosterApp
 import de.formerdehne.wposter.data.BlockBuilder
+import de.formerdehne.wposter.data.MediaCaption
 import de.formerdehne.wposter.data.MediaUploader
 import de.formerdehne.wposter.data.PublishedPost
 import de.formerdehne.wposter.data.UploadedMedia
 import de.formerdehne.wposter.data.WpClient
+import de.formerdehne.wposter.i18n.str
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -23,7 +24,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-enum class ItemState { WAITING, PREPARING, UPLOADING, DONE, FAILED }
+/** OFFLINE = wartet auf eine Internetverbindung. */
+enum class ItemState { WAITING, OFFLINE, PREPARING, UPLOADING, DONE, FAILED }
 
 data class MediaItem(
     val key: Long,
@@ -33,13 +35,18 @@ data class MediaItem(
     val progress: Float = 0f,
     val error: String? = null,
     val uploaded: UploadedMedia? = null,
+    val caption: MediaCaption = MediaCaption(),
 )
 
 data class DraftState(
+    /** Blog, zu dem dieser Entwurf gehört (wird beim ersten Inhalt festgelegt). */
+    val siteId: String? = null,
     val title: String = "",
     val before: String = "",
     val after: String = "",
     val items: List<MediaItem> = emptyList(),
+    /** true = sofort veröffentlichen (Standard), false = als Entwurf speichern. */
+    val publishNow: Boolean = true,
     val publishing: Boolean = false,
     val publishError: String? = null,
     val published: PublishedPost? = null,
@@ -47,25 +54,74 @@ data class DraftState(
     val hasContent get() = title.isNotBlank() || before.isNotBlank() || after.isNotBlank() || items.isNotEmpty()
     val pendingUploads get() = items.count { it.state != ItemState.DONE && it.state != ItemState.FAILED }
     val failedUploads get() = items.count { it.state == ItemState.FAILED }
+    val waitingForNetwork get() = items.any { it.state == ItemState.OFFLINE }
     val canPublish get() = title.isNotBlank() && !publishing && pendingUploads == 0 && failedUploads == 0
 }
 
 class ComposeViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val settings = (app as WPosterApp).settings
-    private val uploader = MediaUploader(app, settings)
+    private val wposter = app as WPosterApp
+    private val settings = wposter.settings
+    private val uploader = MediaUploader(app, settings, wposter.network)
     private val jobs = HashMap<Long, Job>()
     private var nextKey = 1L
 
     private val _state = MutableStateFlow(DraftState())
     val state: StateFlow<DraftState> = _state.asStateFlow()
 
-    fun setTitle(v: String) = _state.update { it.copy(title = v, publishError = null) }
-    fun setBefore(v: String) = _state.update { it.copy(before = v) }
-    fun setAfter(v: String) = _state.update { it.copy(after = v) }
+    /** Geteilte Dateien, die auf die Blog-Auswahl warten. */
+    var pendingShare: List<Uri> = emptyList()
+
+    /** Kategorien & Schlagwörter des Entwurfs. */
+    val terms = TermsEditor(viewModelScope, wposter.terms) { ensureSite() }
+
+    /** Entwurf an den aktiven Blog binden, sobald er Inhalt bekommt. */
+    private fun ensureSite(): String? {
+        _state.value.siteId?.let { return it }
+        val id = settings.state.value.active?.id ?: return null
+        _state.update { it.copy(siteId = id) }
+        return id
+    }
+
+    /**
+     * Entwurf für einen bestimmten Blog beginnen (z. B. nach Auswahl beim Teilen).
+     * Gehört ein bestehender Entwurf zu einem anderen Blog, wird er verworfen.
+     */
+    fun startFor(siteId: String) {
+        val s = _state.value
+        if (s.siteId != null && s.siteId != siteId && s.hasContent) discard()
+        _state.update { it.copy(siteId = siteId) }
+        loadTerms()
+    }
+
+    /** Kategorien/Schlagwörter des Blogs laden (beim Öffnen des Editors). */
+    fun loadTerms() {
+        val id = _state.value.siteId ?: settings.state.value.active?.id ?: return
+        terms.load(id)
+    }
+
+    fun setTitle(v: String) {
+        ensureSite()
+        _state.update { it.copy(title = v, publishError = null) }
+    }
+
+    fun setBefore(v: String) {
+        ensureSite()
+        _state.update { it.copy(before = v) }
+    }
+
+    fun setAfter(v: String) {
+        ensureSite()
+        _state.update { it.copy(after = v) }
+    }
+
+    fun setPublishNow(v: Boolean) = _state.update { it.copy(publishNow = v) }
+
+    fun setCaption(key: Long, caption: MediaCaption) = updateItem(key) { it.copy(caption = caption) }
 
     /** [stage] = true für per "Teilen" erhaltene Dateien: erst in den App-Speicher kopieren. */
     fun addMedia(uris: List<Uri>, stage: Boolean = false) {
+        ensureSite()
         val resolver = getApplication<Application>().contentResolver
         val known = _state.value.items.map { it.uri }.toSet()
         val newItems = uris.filter { it !in known }.map { uri ->
@@ -114,6 +170,8 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
             var lastPercent = -1
             val uploaded = uploader.upload(
                 item.uri,
+                _state.value.siteId,
+                onWaitingForNetwork = { updateItem(key) { it.copy(state = ItemState.OFFLINE) } },
                 onPreparing = { updateItem(key) { it.copy(state = ItemState.PREPARING) } },
                 onUploading = { updateItem(key) { it.copy(state = ItemState.UPLOADING, progress = 0f) } },
                 onProgress = { p ->
@@ -160,19 +218,26 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
     fun publish() {
         val s = _state.value
         if (!s.canPublish) return
-        val credentials = settings.state.value.credentials ?: run {
+        val account = settings.state.value.let { it.account(s.siteId) ?: it.active } ?: run {
             _state.update { it.copy(publishError = str(R.string.error_credentials_missing_short)) }
             return
         }
         _state.update { it.copy(publishing = true, publishError = null) }
         viewModelScope.launch {
             try {
-                val media = s.items.mapNotNull { it.uploaded }
-                val content = BlockBuilder.build(s.before, media, s.after)
-                val featured = media.firstOrNull { it.isImage }?.id
-                val post = WpClient(credentials).createPost(s.title.trim(), content, featured)
+                val (categoryIds, tagIds) = terms.resolveIds(account.id)
+                val media = s.items.mapNotNull { item -> item.uploaded?.let { it to item.caption } }
+                val content = BlockBuilder.build(s.before, media, s.after, str(R.string.media_credit_prefix))
+                val featured = media.firstOrNull { it.first.isImage }?.first?.id
+                val post = WpClient(account.credentials).createPost(
+                    s.title.trim(), content, featured,
+                    status = if (s.publishNow) "publish" else "draft",
+                    categories = categoryIds,
+                    tags = tagIds,
+                )
                 // Entwurf leeren, Ergebnis für die Erfolgsseite behalten.
                 _state.value.items.forEach { uploader.releaseStaged(it.uri) }
+                terms.reset()
                 _state.value = DraftState(published = post)
             } catch (e: CancellationException) {
                 throw e
@@ -187,22 +252,24 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
         _state.value.items.forEach { uploader.releaseStaged(it.uri) }
         jobs.values.forEach { it.cancel() }
         jobs.clear()
+        terms.reset()
         _state.value = DraftState()
     }
 
     /** Entwurf verwerfen und bereits hochgeladene Dateien wieder löschen. */
     fun discard() {
+        val siteId = _state.value.siteId
         val uploadedIds = _state.value.items.mapNotNull { it.uploaded?.id }
         reset()
-        deleteRemote(uploadedIds)
+        deleteRemote(uploadedIds, siteId)
     }
 
-    private fun deleteRemote(ids: List<Long>) {
-        val credentials = settings.state.value.credentials ?: return
+    private fun deleteRemote(ids: List<Long>, siteId: String? = _state.value.siteId) {
+        val account = settings.state.value.let { it.account(siteId) ?: it.active } ?: return
         if (ids.isEmpty()) return
         viewModelScope.launch {
             withContext(NonCancellable) {
-                ids.forEach { id -> runCatching { WpClient(credentials).deleteMedia(id) } }
+                ids.forEach { id -> runCatching { WpClient(account.credentials).deleteMedia(id) } }
             }
         }
     }

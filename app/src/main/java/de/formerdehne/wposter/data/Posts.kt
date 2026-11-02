@@ -33,6 +33,8 @@ data class PostEditData(
     val date: LocalDateTime?,
     val featuredMedia: Long,
     val status: String,
+    val categories: List<Long> = emptyList(),
+    val tags: List<Long> = emptyList(),
 )
 
 internal object PostJson {
@@ -84,5 +86,10 @@ internal object PostJson {
         date = date(j.optString("date")),
         featuredMedia = j.optLong("featured_media", 0L),
         status = j.optString("status", "publish"),
+        categories = ids(j.optJSONArray("categories")),
+        tags = ids(j.optJSONArray("tags")),
     )
+
+    private fun ids(arr: org.json.JSONArray?): List<Long> =
+        (0 until (arr?.length() ?: 0)).map { arr!!.optLong(it) }.filter { it > 0 }
 }

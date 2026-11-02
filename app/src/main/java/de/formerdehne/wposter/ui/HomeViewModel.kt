@@ -87,7 +87,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 if (reset) {
                     // Titel/Untertitel des Blogs nebenbei aktuell halten.
                     runCatching { client.siteMeta() }.getOrNull()?.let {
-                        settings.updateSiteMeta(it.name, it.description)
+                        settings.state.value.active?.id?.let { id -> settings.updateSiteMeta(id, it.name, it.description) }
                     }
                 }
             } catch (e: CancellationException) {

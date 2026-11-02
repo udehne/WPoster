@@ -8,6 +8,7 @@ import de.formerdehne.wposter.R
 import de.formerdehne.wposter.WPosterApp
 import de.formerdehne.wposter.data.BlockBuilder
 import de.formerdehne.wposter.data.BlockParser
+import de.formerdehne.wposter.data.MediaCaption
 import de.formerdehne.wposter.data.MediaUploader
 import de.formerdehne.wposter.data.ParsedBlock
 import de.formerdehne.wposter.data.UploadedMedia
@@ -52,6 +53,9 @@ sealed interface EditBlock {
         val error: String? = null,
         val uploaded: UploadedMedia? = null,
         val originalRaw: String? = null,
+        val caption: MediaCaption = MediaCaption(),
+        /** Bildunterschrift beim Laden – nur bei Änderung wird der Block angepasst. */
+        val originalCaption: MediaCaption? = null,
     ) : EditBlock {
         val mediaId: Long? get() = uploaded?.id?.takeIf { it > 0 }
     }
@@ -62,12 +66,16 @@ sealed interface EditBlock {
 
 data class EditState(
     val postId: Long = 0,
+    /** Blog, zu dem der Beitrag gehört. */
+    val siteId: String? = null,
     val loading: Boolean = false,
     val loadError: String? = null,
     val title: String = "",
     val date: LocalDateTime? = null,
     val originalDate: LocalDateTime? = null,
     val status: String = "publish",
+    /** true = als Entwurf speichern (nicht öffentlich). */
+    val isDraft: Boolean = false,
     val featuredId: Long = 0,
     val blocks: List<EditBlock> = emptyList(),
     val dirty: Boolean = false,
@@ -79,14 +87,16 @@ data class EditState(
     private val media get() = blocks.filterIsInstance<EditBlock.Media>()
     val pendingUploads get() = media.count { it.state != ItemState.DONE && it.state != ItemState.FAILED }
     val failedUploads get() = media.count { it.state == ItemState.FAILED }
+    val waitingForNetwork get() = media.any { it.state == ItemState.OFFLINE }
     val canSave get() = !loading && loadError == null && title.isNotBlank() && !saving &&
         pendingUploads == 0 && failedUploads == 0
 }
 
 class EditViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val settings = (app as WPosterApp).settings
-    private val uploader = MediaUploader(app, settings)
+    private val wposter = app as WPosterApp
+    private val settings = wposter.settings
+    private val uploader = MediaUploader(app, settings, wposter.network)
     private val jobs = HashMap<Long, Job>()
     private var nextKey = 1L
     private var originalImageIds: Set<Long> = emptySet()
@@ -94,6 +104,11 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _state = MutableStateFlow(EditState())
     val state: StateFlow<EditState> = _state.asStateFlow()
+
+    /** Kategorien & Schlagwörter des Beitrags; Änderungen markieren den Beitrag als geändert. */
+    val terms = TermsEditor(viewModelScope, wposter.terms) {
+        _state.update { it.copy(dirty = true, saveError = null) }
+    }
 
     /** Editor für einen Beitrag öffnen. Ungespeicherte Änderungen am selben Beitrag bleiben erhalten. */
     fun start(id: Long) {
@@ -103,18 +118,22 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun load(id: Long) {
-        val credentials = settings.state.value.credentials ?: return
+        val account = settings.state.value.active ?: return
         cancelUploads()
         loadJob?.cancel()
-        _state.value = EditState(postId = id, loading = true)
+        terms.reset()
+        _state.value = EditState(postId = id, siteId = account.id, loading = true)
         loadJob = viewModelScope.launch {
             try {
-                val post = WpClient(credentials).getPostForEdit(id)
+                val post = WpClient(account.credentials).getPostForEdit(id)
                 val blocks = BlockParser.parse(post.content).map { it.toEditBlock() }
                 originalImageIds = blocks.filterIsInstance<EditBlock.Media>()
                     .filter { !it.isVideo }.mapNotNull { it.mediaId }.toSet()
+                terms.load(account.id, post.categories, post.tags)
                 _state.value = EditState(
                     postId = id,
+                    siteId = account.id,
+                    isDraft = post.status == "draft",
                     title = post.title,
                     date = post.date,
                     originalDate = post.date,
@@ -125,7 +144,7 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _state.value = EditState(postId = id, loadError = e.message ?: str(R.string.common_unknown_error))
+                _state.value = EditState(postId = id, siteId = account.id, loadError = e.message ?: str(R.string.common_unknown_error))
             }
         }
     }
@@ -136,10 +155,12 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
         is ParsedBlock.Image -> EditBlock.Media(
             nextKey++, isVideo = false, remoteUrl = src, originalRaw = raw,
             uploaded = UploadedMedia(id, src.orEmpty(), null, isImage = true, isVideo = false),
+            caption = MediaCaption(caption, credit), originalCaption = MediaCaption(caption, credit),
         )
         is ParsedBlock.Video -> EditBlock.Media(
             nextKey++, isVideo = true, remoteUrl = src, originalRaw = raw,
             uploaded = UploadedMedia(id, src.orEmpty(), null, isImage = false, isVideo = true),
+            caption = MediaCaption(caption, credit), originalCaption = MediaCaption(caption, credit),
         )
         is ParsedBlock.Other -> EditBlock.Other(
             nextKey++,
@@ -177,6 +198,12 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
     fun setTitle(v: String) = edit { it.copy(title = v) }
 
     fun setDate(v: LocalDateTime) = edit { it.copy(date = v) }
+
+    fun setDraft(v: Boolean) = edit { it.copy(isDraft = v) }
+
+    fun setCaption(key: Long, caption: MediaCaption) = edit { s ->
+        s.copy(blocks = s.blocks.map { if (it.key == key && it is EditBlock.Media) it.copy(caption = caption) else it })
+    }
 
     fun setText(key: Long, text: String) = edit { s ->
         s.copy(blocks = s.blocks.map { if (it.key == key && it is EditBlock.Text) it.copy(text = text) else it })
@@ -243,6 +270,8 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
             var lastPercent = -1
             val uploaded = uploader.upload(
                 uri,
+                _state.value.siteId,
+                onWaitingForNetwork = { updateMedia(key) { it.copy(state = ItemState.OFFLINE) } },
                 onPreparing = { updateMedia(key) { it.copy(state = ItemState.PREPARING) } },
                 onUploading = { updateMedia(key) { it.copy(state = ItemState.UPLOADING, progress = 0f) } },
                 onProgress = { p ->
@@ -270,7 +299,8 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
     fun save() {
         val s = _state.value
         if (!s.canSave) return
-        val credentials = settings.state.value.credentials ?: return
+        val account = settings.state.value.let { it.account(s.siteId) ?: it.active } ?: return
+        val creditPrefix = str(R.string.media_credit_prefix)
         val content = s.blocks.mapNotNull { block ->
             when (block) {
                 is EditBlock.Text -> when {
@@ -279,7 +309,12 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
                     block.heading != null -> BlockBuilder.heading(block.text, block.heading)
                     else -> BlockBuilder.paragraphs(block.text).joinToString("\n\n").ifBlank { null }
                 }
-                is EditBlock.Media -> block.originalRaw ?: block.uploaded?.let { BlockBuilder.media(it) }
+                is EditBlock.Media -> when {
+                    block.originalRaw != null && block.caption == block.originalCaption -> block.originalRaw
+                    block.originalRaw != null ->
+                        BlockBuilder.replaceCaption(block.originalRaw, BlockBuilder.captionHtml(block.caption, creditPrefix))
+                    else -> block.uploaded?.let { BlockBuilder.media(it, block.caption, creditPrefix) }
+                }
                 is EditBlock.Other -> block.raw
             }
         }.joinToString("\n\n")
@@ -291,11 +326,21 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
         if (featured == 0L) featured = imageIds.firstOrNull() ?: 0L
 
         val dateParam = s.date?.takeIf { it != s.originalDate }?.format(WP_DATE)
+        // Status nur senden, wenn er sich ändern soll (geplante Beiträge bleiben geplant).
+        val statusParam = when {
+            s.isDraft && s.status != "draft" -> "draft"
+            !s.isDraft && s.status == "draft" -> "publish"
+            else -> null
+        }
 
         _state.update { it.copy(saving = true, saveError = null) }
         viewModelScope.launch {
             try {
-                WpClient(credentials).updatePost(s.postId, s.title.trim(), content, dateParam, featured)
+                val (categoryIds, tagIds) = terms.resolveIds(account.id)
+                WpClient(account.credentials).updatePost(
+                    s.postId, s.title.trim(), content, dateParam, featured,
+                    status = statusParam, categories = categoryIds, tags = tagIds,
+                )
                 _state.update { it.copy(saving = false, dirty = false, savedId = s.postId) }
             } catch (e: CancellationException) {
                 throw e
@@ -307,6 +352,7 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
 
     fun consumeSaved() {
         jobs.clear()
+        terms.reset()
         _state.value = EditState()
     }
 
@@ -316,9 +362,11 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
     fun discard() {
         val sessionUploads = _state.value.blocks.filterIsInstance<EditBlock.Media>()
             .filter { it.originalRaw == null }.mapNotNull { it.mediaId }
+        val siteId = _state.value.siteId
         cancelUploads()
+        terms.reset()
         _state.value = EditState()
-        deleteRemote(sessionUploads)
+        deleteRemote(sessionUploads, siteId)
     }
 
     private fun cancelUploads() {
@@ -326,12 +374,12 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
         jobs.clear()
     }
 
-    private fun deleteRemote(ids: List<Long>) {
-        val credentials = settings.state.value.credentials ?: return
+    private fun deleteRemote(ids: List<Long>, siteId: String? = _state.value.siteId) {
+        val account = settings.state.value.let { it.account(siteId) ?: it.active } ?: return
         if (ids.isEmpty()) return
         viewModelScope.launch {
             withContext(NonCancellable) {
-                ids.forEach { id -> runCatching { WpClient(credentials).deleteMedia(id) } }
+                ids.forEach { id -> runCatching { WpClient(account.credentials).deleteMedia(id) } }
             }
         }
     }

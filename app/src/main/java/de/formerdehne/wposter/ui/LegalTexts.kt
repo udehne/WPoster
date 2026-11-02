@@ -74,6 +74,39 @@ object LegalTexts {
             )
         ),
         LegalSection(
+            "Mehrere Blogs",
+            listOf(
+                "Über ☰ → „Blog hinzufügen“ richtest du weitere Blogs ein. Sind mehrere eingerichtet, wechselst du " +
+                    "oben im Menü ☰ zwischen ihnen.",
+                "Unter ☰ → Einstellungen → Blogs kannst du jeden Blog bearbeiten, entfernen und festlegen, welcher " +
+                    "beim Start der App angezeigt wird. Beim Teilen aus der Galerie fragt die App, in welchen Blog es geht."
+            )
+        ),
+        LegalSection(
+            "Kategorien, Schlagwörter und Entwürfe",
+            listOf(
+                "Beim Schreiben und Bearbeiten wählst du Kategorien aus der Liste oder legst neue an (dafür braucht " +
+                    "dein WordPress-Benutzer die Rolle „Redakteur“). Schlagwörter tippst du ein – passende Vorschläge " +
+                    "erscheinen, neue werden beim Speichern angelegt.",
+                "„Sofort veröffentlichen“ ist voreingestellt. Schaltest du es aus, wird der Beitrag als Entwurf " +
+                    "gespeichert; Entwürfe sind in der Liste markiert und lassen sich später veröffentlichen."
+            )
+        ),
+        LegalSection(
+            "Bildunterschriften und Credits",
+            listOf(
+                "Unter jedem Foto/Video kannst du optional eine Bildunterschrift und einen Credit (z. B. den Namen " +
+                    "der Fotografin) eintragen. Beides erscheint unter dem Bild im Beitrag."
+            )
+        ),
+        LegalSection(
+            "Ohne Internet",
+            listOf(
+                "Ist gerade keine Verbindung da, warten die Uploads und laufen automatisch weiter, sobald wieder " +
+                    "Internet verfügbar ist – auch wenn die App im Hintergrund ist."
+            )
+        ),
+        LegalSection(
             "Datenschutz bei Fotos",
             listOf(
                 "Vor dem Hochladen entfernt die App den Aufnahmeort (GPS) und andere Metadaten aus Fotos und Videos. " +
@@ -293,6 +326,37 @@ object LegalTexts {
                 "Photos removed from a post remain in the WordPress media library.",
                 "Every author may edit their own posts. To edit other people's posts, your " +
                     "WordPress user needs the “Editor” or “Administrator” role."
+            )
+        ),
+        LegalSection(
+            "Several blogs",
+            listOf(
+                "Use ☰ → “Add blog” to set up more blogs. With several blogs, switch between them at the top of the ☰ menu.",
+                "In ☰ → Settings → Blogs you can edit or remove each blog and choose which one is shown when the app " +
+                    "starts. When you share from your gallery, the app asks which blog to post to."
+            )
+        ),
+        LegalSection(
+            "Categories, tags and drafts",
+            listOf(
+                "When writing or editing, pick categories from the list or create new ones (this requires the " +
+                    "WordPress role “Editor”). Type tags – matching suggestions appear, new tags are created when you save.",
+                "“Publish immediately” is on by default. Turn it off to save the post as a draft; drafts are marked " +
+                    "in the list and can be published later."
+            )
+        ),
+        LegalSection(
+            "Captions and credits",
+            listOf(
+                "Below each photo/video you can optionally add a caption and a credit (e.g. the photographer's name). " +
+                    "Both appear under the image in the post."
+            )
+        ),
+        LegalSection(
+            "Without internet",
+            listOf(
+                "If there is no connection, uploads wait and continue automatically once you are back online – " +
+                    "even while the app is in the background."
             )
         ),
         LegalSection(

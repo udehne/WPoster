@@ -3,7 +3,6 @@ package de.formerdehne.wposter.ui
 import android.app.Application
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.AndroidViewModel
-import de.formerdehne.wposter.WPosterApp
 
 enum class InfoDoc { HILFE, IMPRESSUM, DATENSCHUTZ }
 
@@ -17,14 +16,19 @@ sealed interface Screen {
     data class Post(val id: Long) : Screen
     data class Edit(val id: Long) : Screen
     data class Doc(val doc: InfoDoc) : Screen
+    /** Blog einrichten (3 Schritte). */
+    data object Onboarding : Screen
+    data class Congrats(val siteName: String) : Screen
+    data class Account(val id: String) : Screen
+    /** Blog-Auswahl beim Teilen, wenn mehrere Blogs eingerichtet sind. */
+    data object SharePick : Screen
 }
 
 /** Kleine, eigene Navigation mit Zurück-Stapel. */
 class NavViewModel(app: Application) : AndroidViewModel(app) {
 
-    val stack = mutableStateListOf<Screen>(Screen.Home).apply {
-        if ((app as WPosterApp).settings.state.value.credentials == null) add(Screen.Settings)
-    }
+    // Ohne Blog zeigt die Startseite die Begrüßung (siehe HomeScreen/WelcomeScreen).
+    val stack = mutableStateListOf<Screen>(Screen.Home)
 
     val current: Screen get() = stack.last()
 
@@ -57,6 +61,6 @@ class NavViewModel(app: Application) : AndroidViewModel(app) {
     /** Für geteilte Medien: direkt zum Beitrags-Editor (ohne doppelte Einträge). */
     fun openCompose(needsSetup: Boolean) {
         resetTo(Screen.Home, Screen.Compose)
-        if (needsSetup) stack.add(Screen.Settings)
+        if (needsSetup) stack.add(Screen.Onboarding)
     }
 }

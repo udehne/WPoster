@@ -9,7 +9,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.formerdehne.wposter.ui.screens.openInBrowser
 import de.formerdehne.wposter.data.SettingsRepository
+import de.formerdehne.wposter.ui.screens.AccountScreen
 import de.formerdehne.wposter.ui.screens.CalendarScreen
+import de.formerdehne.wposter.ui.screens.CongratsScreen
+import de.formerdehne.wposter.ui.screens.OnboardingScreen
+import de.formerdehne.wposter.ui.screens.SharePickScreen
 import de.formerdehne.wposter.ui.screens.ComposeScreen
 import de.formerdehne.wposter.ui.screens.SearchScreen
 import de.formerdehne.wposter.ui.screens.EditPostScreen
@@ -28,6 +32,7 @@ fun AppRoot(
     editVm: EditViewModel,
     searchVm: SearchViewModel,
     calendarVm: CalendarViewModel,
+    onboardingVm: OnboardingViewModel,
     repository: SettingsRepository,
 ) {
     val settings by repository.state.collectAsStateWithLifecycle()
@@ -37,6 +42,9 @@ fun AppRoot(
     val edit by editVm.state.collectAsStateWithLifecycle()
     val search by searchVm.state.collectAsStateWithLifecycle()
     val calendar by calendarVm.state.collectAsStateWithLifecycle()
+    val onboarding by onboardingVm.state.collectAsStateWithLifecycle()
+    val draftTerms by draftVm.terms.state.collectAsStateWithLifecycle()
+    val editTerms by editVm.terms.state.collectAsStateWithLifecycle()
     val screen = nav.current
     val context = LocalContext.current
 
@@ -57,12 +65,36 @@ fun AppRoot(
         nav.finishEdit(id)
     }
 
+    // Blog erfolgreich eingerichtet.
+    LaunchedEffect(onboarding.doneAccountId) {
+        if (onboarding.doneAccountId == null) return@LaunchedEffect
+        val siteName = onboarding.doneSiteName
+        val wasFirst = onboarding.wasFirst
+        onboardingVm.consumeDone()
+        draftVm.retryFailed()
+        when {
+            // Kam vom Teilen ohne eingerichteten Blog → zurück zum Entwurf.
+            nav.stack.contains(Screen.Compose) -> {
+                if (nav.current == Screen.Onboarding) nav.pop()
+                draftVm.loadTerms()
+            }
+            wasFirst -> nav.resetTo(Screen.Home, Screen.Congrats(siteName))
+            else -> nav.resetTo(Screen.Home)
+        }
+    }
+
+    fun startOnboarding() {
+        onboardingVm.start()
+        nav.push(Screen.Onboarding)
+    }
+
     // Beitragsansicht/Editor laden, sobald sie angezeigt werden.
     LaunchedEffect(screen) {
         when (screen) {
             is Screen.Post -> postVm.load(screen.id)
             is Screen.Edit -> editVm.start(screen.id)
             Screen.Calendar -> calendarVm.open()
+            Screen.Compose -> draftVm.loadTerms()
             else -> Unit
         }
     }
@@ -82,7 +114,15 @@ fun AppRoot(
                 settings = settings,
                 home = home,
                 draft = draft,
-                onCompose = { nav.push(Screen.Compose) },
+                onCompose = {
+                    // Offener Entwurf (ggf. für einen anderen Blog) wird fortgesetzt, sonst neuer Entwurf im aktiven Blog.
+                    if (draft.hasContent) {
+                        draft.siteId?.let { if (it != settings.active?.id) repository.setActive(it) }
+                    } else {
+                        settings.active?.id?.let(draftVm::startFor)
+                    }
+                    nav.push(Screen.Compose)
+                },
                 onDiscardDraft = draftVm::discard,
                 onOpenPost = { nav.push(Screen.Post(it)) },
                 onRefresh = homeVm::refresh,
@@ -93,6 +133,13 @@ fun AppRoot(
                 onCalendar = { nav.push(Screen.Calendar) },
                 onOpenUrl = { openInBrowser(context, it) },
                 onDismissUpdate = homeVm::dismissUpdate,
+                onStartOnboarding = ::startOnboarding,
+                onSwitchBlog = repository::setActive,
+                onAddBlog = ::startOnboarding,
+                onContinueDraft = {
+                    draft.siteId?.let { if (it != settings.active?.id) repository.setActive(it) }
+                    nav.push(Screen.Compose)
+                },
             )
             Screen.Search -> SearchScreen(
                 state = search,
@@ -125,16 +172,65 @@ fun AppRoot(
                 onMove = draftVm::move,
                 onPublish = draftVm::publish,
                 onDismissError = draftVm::dismissError,
+                siteLabel = settings.takeIf { it.accounts.size > 1 }
+                    ?.let { it.account(draft.siteId) ?: it.active }
+                    ?.let { it.siteName.ifBlank { it.host } },
+                terms = draftTerms,
+                termsEditor = draftVm.terms,
+                onRetryTerms = draftVm::loadTerms,
+                onCaption = draftVm::setCaption,
+                onPublishNow = draftVm::setPublishNow,
             )
             Screen.Settings -> SettingsScreen(
                 settings = settings,
                 repository = repository,
                 onBack = { nav.pop() },
-                onSaved = { firstSetup ->
-                    draftVm.retryFailed()
-                    if (firstSetup) nav.pop()
-                },
+                onOpenAccount = { nav.push(Screen.Account(it)) },
+                onAddBlog = ::startOnboarding,
                 onLegal = { nav.push(Screen.Doc(it)) },
+            )
+            is Screen.Account -> {
+                val account = settings.account(s.id)
+                if (account == null) {
+                    LaunchedEffect(s.id) { nav.pop() }
+                } else {
+                    AccountScreen(
+                        account = account,
+                        isStart = settings.startId == account.id,
+                        isOnlyAccount = settings.accounts.size == 1,
+                        repository = repository,
+                        onBack = { nav.pop() },
+                        onRemoved = {
+                            if (settings.accounts.size <= 1) nav.resetTo(Screen.Home) else nav.pop()
+                        },
+                    )
+                }
+            }
+            Screen.Onboarding -> OnboardingScreen(
+                state = onboarding,
+                vm = onboardingVm,
+                onCancel = { nav.pop() },
+            )
+            is Screen.Congrats -> CongratsScreen(
+                siteName = s.siteName,
+                onContinue = { nav.resetTo(Screen.Home) },
+            )
+            Screen.SharePick -> SharePickScreen(
+                accounts = settings.accounts,
+                activeId = settings.active?.id,
+                draftSiteId = draft.siteId,
+                draftHasContent = draft.hasContent,
+                onPick = { id ->
+                    repository.setActive(id)
+                    draftVm.startFor(id)
+                    draftVm.addMedia(draftVm.pendingShare, stage = true)
+                    draftVm.pendingShare = emptyList()
+                    nav.resetTo(Screen.Home, Screen.Compose)
+                },
+                onCancel = {
+                    draftVm.pendingShare = emptyList()
+                    nav.resetTo(Screen.Home)
+                },
             )
             Screen.Success -> SuccessScreen(
                 post = draft.published,
@@ -175,6 +271,11 @@ fun AppRoot(
                 onSave = editVm::save,
                 onReload = { editVm.load(s.id) },
                 onDismissError = editVm::dismissError,
+                terms = editTerms,
+                termsEditor = editVm.terms,
+                onRetryTerms = { edit.siteId?.let { editVm.terms.load(it) } },
+                onCaption = editVm::setCaption,
+                onDraft = editVm::setDraft,
             )
             is Screen.Doc -> LegalScreen(doc = s.doc, onBack = { nav.pop() })
         }

@@ -20,7 +20,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
@@ -98,7 +100,17 @@ fun HomeScreen(
     onCalendar: () -> Unit,
     onOpenUrl: (String) -> Unit,
     onDismissUpdate: (String) -> Unit,
+    onStartOnboarding: () -> Unit,
+    onSwitchBlog: (String) -> Unit,
+    onAddBlog: () -> Unit,
+    onContinueDraft: () -> Unit,
+    draftBlog: String?,
 ) {
+    // Noch kein Blog: Begrüßung statt Beitragsliste.
+    if (settings.accounts.isEmpty()) {
+        WelcomeScreen(onStart = onStartOnboarding, onDoc = onDoc)
+        return
+    }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var confirmDiscard by remember { mutableStateOf(false) }
@@ -128,12 +140,49 @@ fun HomeScreen(
                 }
                 HorizontalDivider(Modifier.padding(horizontal = 24.dp))
                 Spacer(Modifier.height(8.dp))
+                if (settings.accounts.size > 1) {
+                    Text(
+                        stringResource(R.string.drawer_blogs).uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.padding(start = 28.dp, top = 8.dp, bottom = 4.dp),
+                    )
+                    settings.accounts.forEach { account ->
+                        val active = account.id == settings.active?.id
+                        NavigationDrawerItem(
+                            label = {
+                                Column {
+                                    Text(account.siteName.ifBlank { account.host }, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(
+                                        account.host,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    if (active) Icons.Default.CheckCircle else Icons.Default.Home,
+                                    contentDescription = if (active) stringResource(R.string.drawer_active_blog) else null,
+                                    tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            },
+                            selected = active,
+                            onClick = { closeAnd { if (!active) onSwitchBlog(account.id) } },
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                        )
+                    }
+                    HorizontalDivider(Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                }
                 if (configured) {
                     DrawerEntry(stringResource(R.string.drawer_search), Icons.Default.Search) { closeAnd(onSearch) }
                     DrawerEntry(stringResource(R.string.calendar_title), Icons.Default.DateRange) { closeAnd(onCalendar) }
                     HorizontalDivider(Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
                 }
                 DrawerEntry(stringResource(R.string.common_help), Icons.Default.Info) { closeAnd { onDoc(InfoDoc.HILFE) } }
+                DrawerEntry(stringResource(R.string.drawer_add_blog), Icons.Default.Add) { closeAnd(onAddBlog) }
                 DrawerEntry(stringResource(R.string.settings_title), Icons.Default.Settings) { closeAnd(onSettings) }
                 DrawerEntry(stringResource(R.string.legal_title_notice), Icons.Default.AccountBox) { closeAnd { onDoc(InfoDoc.IMPRESSUM) } }
                 DrawerEntry(stringResource(R.string.drawer_privacy), Icons.Default.Lock) { closeAnd { onDoc(InfoDoc.DATENSCHUTZ) } }
@@ -196,7 +245,7 @@ fun HomeScreen(
             },
         ) { padding ->
             if (!configured) {
-                Welcome(Modifier.padding(padding), onSettings)
+                WelcomeScreen(onStart = onStartOnboarding, onDoc = onDoc)
             } else {
                 val update = settings.latestVersion?.takeIf {
                     settings.checkUpdates && UpdateChecker.enabledForThisBuild &&
@@ -212,7 +261,9 @@ fun HomeScreen(
                     onOpenPost = onOpenPost,
                     onRefresh = onRefresh,
                     onLoadMore = onLoadMore,
-                    onContinueDraft = onCompose,
+                    onContinueDraft = onContinueDraft,
+                    draftBlog = settings.account(draft.siteId)?.takeIf { settings.accounts.size > 1 }
+                        ?.let { it.siteName.ifBlank { it.host } },
                     onDiscardDraft = { confirmDiscard = true },
                 )
             }
@@ -256,6 +307,7 @@ private fun PostList(
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onContinueDraft: () -> Unit,
+    draftBlog: String?,
     onDiscardDraft: () -> Unit,
 ) {
     PullToRefreshBox(
@@ -278,7 +330,7 @@ private fun PostList(
                 }
             }
             if (draft.hasContent) {
-                item(key = "draft") { DraftCard(draft, onContinueDraft, onDiscardDraft) }
+                item(key = "draft") { DraftCard(draft, draftBlog, onContinueDraft, onDiscardDraft) }
             }
             when {
                 home.initialLoading -> item(key = "loading") {
@@ -338,7 +390,7 @@ private fun UpdateCard(version: String, onDownload: () -> Unit, onDismiss: () ->
 }
 
 @Composable
-private fun DraftCard(draft: DraftState, onContinue: () -> Unit, onDiscard: () -> Unit) {
+private fun DraftCard(draft: DraftState, blog: String?, onContinue: () -> Unit, onDiscard: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         modifier = Modifier.fillMaxWidth(),
@@ -347,7 +399,11 @@ private fun DraftCard(draft: DraftState, onContinue: () -> Unit, onDiscard: () -
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Edit, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.home_draft_title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text(
+                    if (blog != null) stringResource(R.string.home_draft_for_blog, blog) else stringResource(R.string.home_draft_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
             }
             Spacer(Modifier.height(4.dp))
             Text(
@@ -362,50 +418,6 @@ private fun DraftCard(draft: DraftState, onContinue: () -> Unit, onDiscard: () -
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onDiscard) { Text(stringResource(R.string.common_discard)) }
                 TextButton(onClick = onContinue) { Text(stringResource(R.string.home_draft_continue), fontWeight = FontWeight.SemiBold) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun Welcome(modifier: Modifier, onSettings: () -> Unit) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(Modifier.height(32.dp))
-        BrandMark(88.dp)
-        Spacer(Modifier.height(20.dp))
-        Text(stringResource(R.string.home_welcome_title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            stringResource(R.string.home_welcome_text),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(32.dp))
-        Button(onClick = onSettings, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-            Icon(Icons.Default.Settings, null)
-            Spacer(Modifier.size(10.dp))
-            Text(stringResource(R.string.home_setup_now))
-        }
-        Spacer(Modifier.height(32.dp))
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.Share, null, tint = MaterialTheme.colorScheme.tertiary)
-                Text(stringResource(R.string.home_share_title), style = MaterialTheme.typography.titleMedium)
-                Text(
-                    stringResource(R.string.home_share_text),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
     }

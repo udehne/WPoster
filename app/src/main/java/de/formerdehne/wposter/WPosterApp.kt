@@ -18,12 +18,23 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 /** Zusammenfassung aller laufenden Uploads (Erstellen + Bearbeiten). */
-data class UploadStatus(val total: Int, val done: Int, val failed: Int, val pending: Int, val percent: Int)
+data class UploadStatus(
+    val total: Int,
+    val done: Int,
+    val failed: Int,
+    val pending: Int,
+    val percent: Int,
+    /** Mindestens ein Upload wartet auf eine Internetverbindung. */
+    val waitingForNetwork: Boolean = false,
+)
 
 class WPosterApp : Application(), ImageLoaderFactory, ViewModelStoreOwner {
 
     lateinit var settings: SettingsRepository
         private set
+
+    val network by lazy { de.formerdehne.wposter.data.NetworkMonitor(this) }
+    val terms by lazy { de.formerdehne.wposter.data.TermsCache(settings) }
 
     /**
      * ViewModels mit Daten (Entwurf, Editor, Listen) leben so lange wie der Prozess –
@@ -45,7 +56,8 @@ class WPosterApp : Application(), ImageLoaderFactory, ViewModelStoreOwner {
             val failed = items.count { it.first == ItemState.FAILED }
             val current = items.firstOrNull { it.first == ItemState.UPLOADING }?.second ?: 0f
             val percent = if (items.isEmpty()) 0 else (((done + current) / items.size) * 100).toInt()
-            UploadStatus(items.size, done, failed, items.size - done - failed, percent)
+            val offline = items.any { it.first == ItemState.OFFLINE }
+            UploadStatus(items.size, done, failed, items.size - done - failed, percent, offline)
         }.distinctUntilChanged()
     }
 

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Prefix for the credit line in captions. Must stay "Photo:" or "Foto:" so the app can read it back. -->
+    <string name="media_credit_prefix">Photo:</string>
+    <string name="media_waiting_network">Waiting for internet connection …</string>
+    <string name="upload_notification_offline">Waiting for internet – uploads continue automatically</string>
+    <string name="common_hint_offline">No internet right now – uploads will continue automatically.</string>
+
+    <string name="caption_add">Add caption &amp; credit</string>
+    <string name="caption_label">Caption (optional)</string>
+    <string name="caption_placeholder">What can be seen?</string>
+    <string name="caption_credit_label">Credit (optional)</string>
+    <string name="caption_credit_placeholder">e.g. name of the photographer</string>
+    <string name="caption_done">Done</string>
+
+    <string name="terms_categories">Categories</string>
+    <string name="terms_tags">Tags</string>
+    <string name="terms_load_failed">Categories and tags could not be loaded: %1$s</string>
+    <string name="terms_new_category">New category</string>
+    <string name="terms_new_category_title">New category</string>
+    <string name="terms_category_name">Name</string>
+    <string name="terms_new_category_hint">It will be created when you save. Creating categories requires the WordPress role “Editor” or higher.</string>
+    <string name="terms_show_all">Show all (%1$d)</string>
+    <string name="terms_show_less">Show less</string>
+    <string name="terms_remove_tag">Remove tag</string>
+    <string name="terms_tag_placeholder">Add tag …</string>
+    <string name="terms_new_suffix">%1$s (new)</string>
+    <string name="error_cannot_create_category">The category “%1$s” could not be created. Creating categories requires the WordPress role “Editor” or higher.</string>
+    <string name="error_cannot_create_tag">The tag “%1$s” could not be created – your WordPress user lacks permission.</string>
+
+    <string name="compose_for_blog">Post to: %1$s</string>
+    <string name="compose_publish_now">Publish immediately</string>
+    <string name="compose_publish_now_on">The post will be visible right away.</string>
+    <string name="compose_publish_now_off">Saved as a draft – only visible in WordPress and in the app.</string>
+    <string name="compose_save_draft">Save as draft</string>
+    <string name="common_draft">Draft</string>
+    <string name="success_draft_title">Saved as draft</string>
+
+    <string name="edit_add_text_long">Add text</string>
+    <string name="edit_add_heading_long">Add subheading</string>
+    <string name="edit_add_media_long">Add photos &amp; videos</string>
+
+    <string name="home_draft_for_blog">Draft for %1$s</string>
+    <string name="drawer_blogs">Blogs</string>
+    <string name="drawer_manage_blogs">Manage blogs</string>
+    <string name="drawer_add_blog">Add blog</string>
+    <string name="drawer_active_blog">Current blog</string>
+</resources>

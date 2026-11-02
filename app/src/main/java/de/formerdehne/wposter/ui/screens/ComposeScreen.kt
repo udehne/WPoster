@@ -30,7 +30,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -61,6 +60,13 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import de.formerdehne.wposter.R
 import de.formerdehne.wposter.ui.DraftState
+import de.formerdehne.wposter.ui.TermsEditor
+import de.formerdehne.wposter.ui.TermsUi
+import de.formerdehne.wposter.data.MediaCaption
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.Switch
 import de.formerdehne.wposter.ui.ItemState
 import de.formerdehne.wposter.ui.MediaItem
 
@@ -77,6 +83,12 @@ fun ComposeScreen(
     onMove: (Long, Int) -> Unit,
     onPublish: () -> Unit,
     onDismissError: () -> Unit,
+    siteLabel: String?,
+    terms: TermsUi,
+    termsEditor: TermsEditor,
+    onRetryTerms: () -> Unit,
+    onCaption: (Long, MediaCaption) -> Unit,
+    onPublishNow: (Boolean) -> Unit,
 ) {
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(50)) { uris ->
         if (uris.isNotEmpty()) onAddMedia(uris)
@@ -97,6 +109,13 @@ fun ComposeScreen(
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (siteLabel != null) {
+                Text(
+                    stringResource(R.string.compose_for_blog, siteLabel),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
             OutlinedTextField(
                 value = state.title,
                 onValueChange = onTitle,
@@ -162,6 +181,8 @@ fun ComposeScreen(
                             onMove = { onMove(item.key, it) },
                             onRemove = { onRemove(item.key) },
                             onRetry = { onRetry(item.key) },
+                            caption = item.caption,
+                            onCaption = { onCaption(item.key, it) },
                         )
                     }
                 }
@@ -175,6 +196,19 @@ fun ComposeScreen(
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            TermsSection(
+                state = terms,
+                onToggleCategory = termsEditor::toggleCategory,
+                onAddCategory = termsEditor::addCategory,
+                onTagQuery = termsEditor::setTagQuery,
+                onAddTagFromQuery = termsEditor::addTagFromQuery,
+                onAddTag = termsEditor::addTag,
+                onRemoveTag = termsEditor::removeTag,
+                onRetry = onRetryTerms,
+            )
+
+            PublishModeCard(publishNow = state.publishNow, onChange = onPublishNow)
             Spacer(Modifier.height(16.dp))
         }
     }
@@ -199,6 +233,27 @@ fun ComposeScreen(
     }
 }
 
+/** Schalter "Sofort veröffentlichen" (Standard) bzw. als Entwurf speichern. */
+@Composable
+fun PublishModeCard(publishNow: Boolean, onChange: (Boolean) -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.compose_publish_now)) },
+            supportingContent = {
+                Text(
+                    if (publishNow) stringResource(R.string.compose_publish_now_on)
+                    else stringResource(R.string.compose_publish_now_off)
+                )
+            },
+            trailingContent = { Switch(checked = publishNow, onCheckedChange = onChange) },
+            colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        )
+    }
+}
+
 @Composable
 private fun PublishBar(state: DraftState, onPublish: () -> Unit) {
     Surface(color = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
@@ -210,6 +265,7 @@ private fun PublishBar(state: DraftState, onPublish: () -> Unit) {
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             val hint = when {
+                state.waitingForNetwork -> stringResource(R.string.common_hint_offline)
                 state.pendingUploads > 0 -> stringResource(R.string.common_hint_pending, state.pendingUploads)
                 state.failedUploads > 0 -> stringResource(R.string.common_hint_failed)
                 state.title.isBlank() -> stringResource(R.string.common_hint_title)
@@ -228,9 +284,12 @@ private fun PublishBar(state: DraftState, onPublish: () -> Unit) {
                 enabled = state.canPublish,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             ) {
-                Icon(Icons.Default.Send, null, Modifier.size(18.dp))
+                Icon(Icons.AutoMirrored.Filled.Send, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(10.dp))
-                Text(stringResource(R.string.common_publish), fontWeight = FontWeight.SemiBold)
+                Text(
+                    if (state.publishNow) stringResource(R.string.common_publish) else stringResource(R.string.compose_save_draft),
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         }
     }

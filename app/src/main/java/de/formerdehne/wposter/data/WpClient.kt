@@ -34,7 +34,14 @@ class WpException(
     val httpCode: Int? = null,
     val wpCode: String? = null,
     val notJson: Boolean = false,
+    /** true bei Verbindungsproblemen (kein Netz, Zeitüberschreitung) – Upload kann später wiederholt werden. */
+    val isNetwork: Boolean = false,
+    /** "data"-Objekt aus der WordPress-Fehlerantwort (z. B. term_id bei term_exists). */
+    val data: JSONObject? = null,
 ) : IOException(message)
+
+/** Kategorie oder Schlagwort. [id] == null: neu, wird beim Speichern angelegt. */
+data class Term(val id: Long?, val name: String)
 
 data class SiteInfo(
     val siteName: String,
@@ -53,7 +60,7 @@ data class UploadedMedia(
     val isVideo: Boolean,
 )
 
-data class PublishedPost(val id: Long, val link: String, val title: String)
+data class PublishedPost(val id: Long, val link: String, val title: String, val status: String = "publish")
 
 /** Spricht die WordPress-REST-API mit Anwendungspasswort (HTTP Basic Auth) an. */
 class WpClient(private val credentials: Credentials) {
@@ -154,17 +161,63 @@ class WpClient(private val credentials: Credentials) {
         return (0 until arr.length()).map { PostJson.summary(arr.getJSONObject(it)) }
     }
 
-    /** Abfrage inkl. geplanter Beiträge; fällt auf "nur veröffentlicht" zurück, wenn der Server das ablehnt. */
+    /**
+     * Abfrage inkl. geplanter Beiträge und Entwürfe; fällt schrittweise auf weniger
+     * Status zurück, wenn der Server das für diesen Benutzer ablehnt.
+     */
     private suspend fun postsQuery(query: Map<String, String>): String {
-        if (includeFuture) {
+        while (statusLevel < STATUS_FILTERS.size) {
+            val filter = STATUS_FILTERS[statusLevel] ?: return get("/wp/v2/posts", query)
             try {
-                return get("/wp/v2/posts", query + ("status" to "publish,future"))
+                return get("/wp/v2/posts", query + ("status" to filter))
             } catch (e: WpException) {
                 if (e.wpCode != "rest_invalid_param" && e.wpCode != "rest_forbidden_status") throw e
-                includeFuture = false
+                statusLevel++
             }
         }
         return get("/wp/v2/posts", query)
+    }
+
+    // ---------- Kategorien & Schlagwörter ----------
+
+    private suspend fun terms(taxonomy: String, query: Map<String, String>): List<Term> {
+        val arr = JSONArray(get("/wp/v2/$taxonomy", query + ("_fields" to "id,name")))
+        return (0 until arr.length()).mapNotNull { arr.optJSONObject(it) }
+            .map { Term(it.getLong("id"), HtmlText.decode(it.optString("name"))) }
+    }
+
+    suspend fun categories(): List<Term> =
+        terms("categories", mapOf("per_page" to "100", "orderby" to "name", "hide_empty" to "false"))
+
+    suspend fun popularTags(): List<Term> =
+        terms("tags", mapOf("per_page" to "100", "orderby" to "count", "order" to "desc", "hide_empty" to "false"))
+
+    suspend fun searchTags(search: String): List<Term> =
+        terms("tags", mapOf("per_page" to "20", "search" to search, "hide_empty" to "false"))
+
+    suspend fun termsByIds(taxonomy: String, ids: List<Long>): List<Term> =
+        if (ids.isEmpty()) emptyList()
+        else terms(taxonomy, mapOf("include" to ids.joinToString(","), "per_page" to "100", "hide_empty" to "false"))
+
+    /** Legt eine Kategorie ("categories") oder ein Schlagwort ("tags") an; existiert es schon, wird es verwendet. */
+    suspend fun createTerm(taxonomy: String, name: String): Term {
+        val req = request(url("/wp/v2/$taxonomy"))
+            .post(JSONObject().put("name", name.trim()).toString().toRequestBody(JSON))
+            .build()
+        return try {
+            val j = JSONObject(execute(req))
+            Term(j.getLong("id"), HtmlText.decode(j.optString("name", name)))
+        } catch (e: WpException) {
+            val existing = e.data?.optLong("term_id", 0L) ?: 0L
+            if (e.wpCode == "term_exists" && existing > 0) return Term(existing, name.trim())
+            if (e.wpCode == "rest_cannot_create" || e.httpCode == 403) {
+                throw WpException(
+                    str(if (taxonomy == "categories") R.string.error_cannot_create_category else R.string.error_cannot_create_tag, name),
+                    httpCode = e.httpCode, wpCode = e.wpCode,
+                )
+            }
+            throw e
+        }
     }
 
     suspend fun getPost(id: Long): PostDetail =
@@ -189,12 +242,24 @@ class WpClient(private val credentials: Credentials) {
         return older to newer
     }
 
-    suspend fun updatePost(id: Long, title: String, content: String, date: String?, featuredMediaId: Long) {
+    suspend fun updatePost(
+        id: Long,
+        title: String,
+        content: String,
+        date: String?,
+        featuredMediaId: Long,
+        status: String?,
+        categories: List<Long>,
+        tags: List<Long>,
+    ) {
         val payload = JSONObject()
             .put("title", title)
             .put("content", content)
             .put("featured_media", featuredMediaId)
+            .put("categories", JSONArray(categories))
+            .put("tags", JSONArray(tags))
         if (date != null) payload.put("date", date)
+        if (status != null) payload.put("status", status)
         val req = request(url("/wp/v2/posts/$id"))
             .post(payload.toString().toRequestBody(JSON))
             .build()
@@ -236,12 +301,21 @@ class WpClient(private val credentials: Credentials) {
         execute(req)
     }
 
-    suspend fun createPost(title: String, content: String, featuredMediaId: Long?): PublishedPost {
+    suspend fun createPost(
+        title: String,
+        content: String,
+        featuredMediaId: Long?,
+        status: String,
+        categories: List<Long>,
+        tags: List<Long>,
+    ): PublishedPost {
         val payload = JSONObject()
             .put("title", title)
             .put("content", content)
-            .put("status", "publish")
+            .put("status", status)
         if (featuredMediaId != null) payload.put("featured_media", featuredMediaId)
+        if (categories.isNotEmpty()) payload.put("categories", JSONArray(categories))
+        if (tags.isNotEmpty()) payload.put("tags", JSONArray(tags))
         val req = request(url("/wp/v2/posts"))
             .post(payload.toString().toRequestBody(JSON))
             .build()
@@ -250,15 +324,18 @@ class WpClient(private val credentials: Credentials) {
             id = json.getLong("id"),
             link = json.optString("link"),
             title = json.optJSONObject("title")?.optString("rendered") ?: title,
+            status = json.optString("status", status),
         )
     }
 
     companion object {
         private val USER_AGENT = "WPoster/${BuildConfig.VERSION_NAME} (Android)"
 
-        /** Wird false, wenn der Server status=publish,future ablehnt. */
+        /** Status-Filter für Beitragslisten, vom umfassendsten zum einfachsten (null = Standard). */
+        private val STATUS_FILTERS = listOf("publish,future,draft", "publish,future", null)
+
         @Volatile
-        private var includeFuture = true
+        private var statusLevel = 0
         private val JSON = "application/json; charset=utf-8".toMediaType()
 
         val http: OkHttpClient = OkHttpClient.Builder()
@@ -323,7 +400,7 @@ class WpClient(private val credentials: Credentials) {
                 json == null -> str(R.string.error_unexpected_response, code)
                 else -> wpMessage ?: str(R.string.error_server, code)
             }
-            return WpException(text, httpCode = code, wpCode = wpCode, notJson = json == null)
+            return WpException(text, httpCode = code, wpCode = wpCode, notJson = json == null, data = json?.optJSONObject("data"))
         }
     }
 }
@@ -357,7 +434,10 @@ private suspend fun Call.await(): Response = suspendCancellableCoroutine { cont 
         override fun onFailure(call: Call, e: IOException) {
             if (!cont.isCancelled) {
                 cont.resumeWithException(
-                    WpException(str(R.string.error_no_connection, e.message ?: e.javaClass.simpleName))
+                    WpException(
+                        str(R.string.error_no_connection, e.message ?: e.javaClass.simpleName),
+                        isNetwork = true,
+                    )
                 )
             }
         }

@@ -22,6 +22,9 @@ import de.formerdehne.wposter.ui.ComposeViewModel
 import de.formerdehne.wposter.ui.EditViewModel
 import de.formerdehne.wposter.ui.HomeViewModel
 import de.formerdehne.wposter.ui.NavViewModel
+import de.formerdehne.wposter.ui.OnboardingViewModel
+import de.formerdehne.wposter.ui.Screen
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import de.formerdehne.wposter.ui.PostViewModel
 import de.formerdehne.wposter.ui.SearchViewModel
 import de.formerdehne.wposter.ui.theme.WPosterTheme
@@ -41,12 +44,15 @@ class MainActivity : ComponentActivity() {
     private val edit by lazy { app.appViewModel<EditViewModel>() }
     private val search by lazy { app.appViewModel<SearchViewModel>() }
     private val calendar by lazy { app.appViewModel<CalendarViewModel>() }
+    private val onboarding by lazy { app.appViewModel<OnboardingViewModel>() }
 
     private val notificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* optional */ }
     private var askedForNotifications = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Startbild mit Logo (Android 12+ nativ, ältere Versionen über die Kompatibilitätsbibliothek).
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         if (savedInstanceState == null) handleIntent(intent)
@@ -60,6 +66,7 @@ class MainActivity : ComponentActivity() {
                     editVm = edit,
                     searchVm = search,
                     calendarVm = calendar,
+                    onboardingVm = onboarding,
                     repository = app.settings,
                 )
             }
@@ -99,6 +106,15 @@ class MainActivity : ComponentActivity() {
                 if (draft.state.value.items.isNotEmpty()) nav.openCompose(needsSetup = false)
             }
             Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE -> handleShare(intent)
+            Intent.ACTION_VIEW -> {
+                // Rücksprung aus dem Browser nach "Zugriff erlauben" in WordPress.
+                val data = intent.data ?: return
+                if (data.scheme == "wposter" && data.host == "auth") {
+                    intent.action = Intent.ACTION_MAIN
+                    if (nav.current != Screen.Onboarding) nav.push(Screen.Onboarding)
+                    onboarding.handleAuthCallback(data)
+                }
+            }
         }
     }
 
@@ -113,8 +129,24 @@ class MainActivity : ComponentActivity() {
         if (uris.isEmpty()) return
         // Beim nächsten Neuaufbau (z. B. Drehen) nicht erneut verarbeiten.
         intent.action = Intent.ACTION_MAIN
-        val needsSetup = app.settings.state.value.credentials == null
-        draft.addMedia(uris, stage = true)
-        nav.openCompose(needsSetup)
+        val accounts = app.settings.state.value.accounts
+        when (accounts.size) {
+            0 -> {
+                // Noch kein Blog: Medien vormerken, erst einrichten.
+                draft.addMedia(uris, stage = true)
+                onboarding.start()
+                nav.openCompose(needsSetup = true)
+            }
+            1 -> {
+                draft.startFor(accounts.first().id)
+                draft.addMedia(uris, stage = true)
+                nav.openCompose(needsSetup = false)
+            }
+            else -> {
+                // Mehrere Blogs: erst fragen, wohin.
+                draft.pendingShare = uris
+                nav.resetTo(Screen.Home, Screen.SharePick)
+            }
+        }
     }
 }

@@ -63,6 +63,9 @@ import androidx.compose.ui.unit.dp
 import de.formerdehne.wposter.R
 import de.formerdehne.wposter.ui.EditBlock
 import de.formerdehne.wposter.ui.EditState
+import de.formerdehne.wposter.ui.TermsEditor
+import de.formerdehne.wposter.ui.TermsUi
+import de.formerdehne.wposter.data.MediaCaption
 import de.formerdehne.wposter.ui.Format
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -85,6 +88,11 @@ fun EditPostScreen(
     onSave: () -> Unit,
     onReload: () -> Unit,
     onDismissError: () -> Unit,
+    terms: TermsUi,
+    termsEditor: TermsEditor,
+    onRetryTerms: () -> Unit,
+    onCaption: (Long, MediaCaption) -> Unit,
+    onDraft: (Boolean) -> Unit,
 ) {
     var confirmLeave by remember { mutableStateOf(false) }
     var pickDate by remember { mutableStateOf(false) }
@@ -163,24 +171,32 @@ fun EditPostScreen(
                         onRemove = onRemove,
                         onRetry = onRetry,
                         onFeatured = onFeatured,
+                        onCaption = onCaption,
                     )
                 }
 
                 SectionLabel(stringResource(R.string.common_add))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { onAddText(false) }, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Default.Add, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(stringResource(R.string.common_text))
-                    }
-                    OutlinedButton(onClick = { onAddText(true) }, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Default.Add, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(stringResource(R.string.edit_add_heading))
-                    }
-                    OutlinedButton(
-                        onClick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) },
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Icon(Icons.Default.Add, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(stringResource(R.string.edit_add_media))
+                // Untereinander statt in eine Zeile gequetscht.
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AddButton(stringResource(R.string.edit_add_text_long)) { onAddText(false) }
+                    AddButton(stringResource(R.string.edit_add_heading_long)) { onAddText(true) }
+                    AddButton(stringResource(R.string.edit_add_media_long)) {
+                        picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
                     }
                 }
+
+                TermsSection(
+                    state = terms,
+                    onToggleCategory = termsEditor::toggleCategory,
+                    onAddCategory = termsEditor::addCategory,
+                    onTagQuery = termsEditor::setTagQuery,
+                    onAddTagFromQuery = termsEditor::addTagFromQuery,
+                    onAddTag = termsEditor::addTag,
+                    onRemoveTag = termsEditor::removeTag,
+                    onRetry = onRetryTerms,
+                )
+
+                PublishModeCard(publishNow = !state.isDraft, onChange = { onDraft(!it) })
                 Spacer(Modifier.height(24.dp))
             }
         }
@@ -253,6 +269,15 @@ fun EditPostScreen(
 private const val DAY_MS = 24L * 60 * 60 * 1000
 
 @Composable
+private fun AddButton(text: String, onClick: () -> Unit) {
+    OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        Icon(Icons.Default.Add, null, Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(text)
+    }
+}
+
+@Composable
 private fun DateCard(state: EditState, onClick: () -> Unit) {
     Card(
         onClick = onClick,
@@ -296,6 +321,7 @@ private fun BlockCard(
     onRemove: (Long) -> Unit,
     onRetry: (Long) -> Unit,
     onFeatured: (Long) -> Unit,
+    onCaption: (Long, MediaCaption) -> Unit,
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -361,6 +387,8 @@ private fun BlockCard(
                         }
                     }
                 } else null,
+                caption = block.caption,
+                onCaption = { onCaption(block.key, it) },
             )
             is EditBlock.Other -> Row(Modifier.padding(start = 16.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -408,6 +436,7 @@ private fun SaveBar(state: EditState, onSave: () -> Unit) {
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             val hint = when {
+                state.waitingForNetwork -> stringResource(R.string.common_hint_offline)
                 state.pendingUploads > 0 -> stringResource(R.string.common_hint_pending, state.pendingUploads)
                 state.failedUploads > 0 -> stringResource(R.string.common_hint_failed)
                 state.title.isBlank() -> stringResource(R.string.common_hint_title)

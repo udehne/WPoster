@@ -16,6 +16,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
 
 data class SearchState(
     val query: String = "",
@@ -31,6 +34,13 @@ data class SearchState(
 class SearchViewModel(app: Application) : AndroidViewModel(app) {
 
     private val settings = (app as WPosterApp).settings
+
+    init {
+        // Blog gewechselt → Ergebnisse des alten Blogs verwerfen.
+        viewModelScope.launch {
+            settings.state.map { it.active?.id }.distinctUntilChanged().drop(1).collect { reset() }
+        }
+    }
     private val _state = MutableStateFlow(SearchState())
     val state: StateFlow<SearchState> = _state.asStateFlow()
     private var job: Job? = null
@@ -61,6 +71,12 @@ class SearchViewModel(app: Application) : AndroidViewModel(app) {
         val s = _state.value
         if (s.endReached || s.loading || s.loadingMore || s.error != null || s.searchedFor == null) return
         job = viewModelScope.launch { run(reset = false) }
+    }
+
+    /** Beim Blog-Wechsel: Suche leeren. */
+    fun reset() {
+        job?.cancel()
+        _state.value = SearchState()
     }
 
     fun retry() {

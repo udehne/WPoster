@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Einrichtung eines Blogs (OnboardingScreen) -->
+    <string name="onb_title">Blog hinzufügen</string>
+    <string name="onb_step">Schritt %1$d von %2$d</string>
+    <string name="onb_address_title">Dein Blog</string>
+    <string name="onb_address_intro">Gib die Adresse deines WordPress-Blogs ein. WPoster prüft sie und hilft dir dann, die App sicher zu verbinden.</string>
+    <string name="onb_continue">Weiter</string>
+    <string name="onb_checking_address">Adresse wird geprüft …</string>
+    <string name="onb_authorize_title">Zugriff erlauben</string>
+    <string name="onb_authorize_text">Gleich öffnet sich WordPress in deinem Browser. Melde dich dort wie gewohnt an und bestätige den Zugriff für „WPoster“.\n\nWPoster bekommt dann automatisch ein eigenes Anwendungspasswort – dein normales Passwort wird nie gespeichert.</string>
+    <string name="onb_found_site">Blog gefunden</string>
+    <string name="onb_authorize_button">Im Browser anmelden &amp; Zugriff erlauben</string>
+    <string name="onb_return_hint">Nach der Bestätigung kehrt der Browser automatisch zu WPoster zurück.</string>
+    <string name="onb_manual_button">Anwendungspasswort selbst erstellen</string>
+    <string name="onb_requirements">Anwendungspasswörter setzen WordPress 5.6 oder neuer und HTTPS voraus.</string>
+    <string name="onb_credentials_title">Zugangsdaten</string>
+    <string name="onb_credentials_intro">Gib deinen WordPress-Benutzernamen und das Anwendungspasswort ein, das du in deinem Profil erstellt hast.</string>
+    <string name="onb_connect_button">Verbindung prüfen &amp; fertig</string>
+    <string name="onb_error_rejected">Der Zugriff wurde in WordPress abgelehnt. Du kannst es erneut versuchen oder selbst ein Anwendungspasswort erstellen.</string>
+    <string name="onb_no_browser">Kein Browser gefunden, um die Seite zu öffnen.</string>
+
+    <!-- Erfolgreich eingerichtet (CongratsScreen) -->
+    <string name="congrats_title">Glückwunsch!</string>
+    <string name="congrats_text">WPoster ist jetzt mit %1$s verbunden.</string>
+    <string name="congrats_tips_title">Gut zu wissen</string>
+    <string name="congrats_tip_share">Teile Fotos und Videos direkt aus deiner Galerie mit WPoster.</string>
+    <string name="congrats_tip_new">Tippe auf +, um einen neuen Beitrag zu schreiben.</string>
+    <string name="congrats_tip_menu">Im Menü ☰ findest du Suche, Kalender und deine Blogs.</string>
+    <string name="congrats_continue">Zur Übersicht</string>
+
+    <!-- Blog bearbeiten (AccountScreen) -->
+    <string name="account_section_access">Zugang</string>
+    <string name="account_section_start">Start</string>
+    <string name="account_show_on_start">Beim App-Start anzeigen</string>
+    <string name="account_show_on_start_text">WPoster öffnet sich mit diesem Blog.</string>
+    <string name="account_only_blog_hint">Das ist dein einziger Blog – er wird daher immer beim Start angezeigt.</string>
+    <string name="account_remove">Blog entfernen</string>
+    <string name="account_remove_title">„%1$s“ entfernen?</string>
+    <string name="account_remove_text">Der Blog und seine Zugangsdaten werden von diesem Gerät entfernt. Das Anwendungspasswort bleibt in WordPress gültig, bis du es dort widerrufst (Benutzer → Profil → Anwendungspasswörter).</string>
+
+    <!-- Blogs in den Einstellungen -->
+    <string name="blogs_section">Blogs</string>
+    <string name="blogs_add">Blog hinzufügen</string>
+    <string name="blogs_start_badge">Start</string>
+    <string name="blogs_active">Aktiver Blog</string>
+    <string name="blogs_empty">Noch kein Blog verbunden.</string>
+
+    <!-- Ziel-Blog beim Teilen (SharePickScreen) -->
+    <string name="sharepick_title">In welchem Blog posten?</string>
+    <string name="sharepick_text">Du hast mehrere Blogs verbunden. Wähle, wohin die geteilten Fotos und Videos sollen.</string>
+    <string name="sharepick_continue">Weiter</string>
+    <string name="sharepick_discard_warning">Dein offener Entwurf für „%1$s“ wird verworfen.</string>
+    <string name="sharepick_discard_warning_generic">Dein offener Entwurf wird verworfen.</string>
+
+    <!-- Begrüßung (WelcomeScreen) -->
+    <string name="welcome_title">Willkommen bei WPoster</string>
+    <string name="welcome_pitch">Fotos und Videos vom Handy direkt in deinen WordPress-Blog posten.</string>
+    <string name="welcome_feature_share_title">Aus der Galerie teilen</string>
+    <string name="welcome_feature_share_text">Fotos und Videos auswählen, „Teilen“ tippen und WPoster wählen.</string>
+    <string name="welcome_feature_browse_title">Ansehen, suchen &amp; Kalender</string>
+    <string name="welcome_feature_browse_text">Alle Beiträge durchblättern und per Text oder Datum finden.</string>
+    <string name="welcome_feature_edit_title">Beiträge bearbeiten</string>
+    <string name="welcome_feature_edit_text">Text, Fotos, Kategorien und Schlagwörter unterwegs ändern.</string>
+    <string name="welcome_feature_blogs_title">Mehrere Blogs</string>
+    <string name="welcome_feature_blogs_text">Verbinde beliebig viele Blogs und wechsle im Handumdrehen zwischen ihnen.</string>
+    <string name="welcome_feature_privacy_title">Datenschutz inklusive</string>
+    <string name="welcome_feature_privacy_text">Standortdaten werden vor dem Hochladen aus Fotos entfernt. Kein Tracking.</string>
+    <string name="welcome_start">Blog verbinden</string>
+</resources>

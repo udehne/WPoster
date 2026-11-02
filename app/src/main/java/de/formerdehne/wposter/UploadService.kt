@@ -60,7 +60,8 @@ class UploadService : Service() {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.upload_notification_title))
             .setContentText(
-                getString(R.string.upload_notification_text, (status.done + 1).coerceAtMost(status.total.coerceAtLeast(1)), status.total.coerceAtLeast(1))
+                if (status.waitingForNetwork) getString(R.string.upload_notification_offline)
+                else getString(R.string.upload_notification_text, (status.done + 1).coerceAtMost(status.total.coerceAtLeast(1)), status.total.coerceAtLeast(1))
             )
             .setProgress(100, status.percent, status.total == 0)
             .setOngoing(true)

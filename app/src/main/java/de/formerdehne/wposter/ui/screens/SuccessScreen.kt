@@ -46,7 +46,10 @@ fun SuccessScreen(post: PublishedPost?, onView: (Long) -> Unit, onNewPost: () ->
                 }
             }
             Spacer(Modifier.height(24.dp))
-            Text(stringResource(R.string.success_title), style = MaterialTheme.typography.headlineMedium)
+            Text(
+                if (post?.status == "draft") stringResource(R.string.success_draft_title) else stringResource(R.string.success_title),
+                style = MaterialTheme.typography.headlineMedium,
+            )
             if (post != null) {
                 Spacer(Modifier.height(8.dp))
                 Text(

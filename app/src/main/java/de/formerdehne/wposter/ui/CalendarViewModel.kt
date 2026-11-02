@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -37,6 +40,13 @@ data class CalendarState(
 class CalendarViewModel(app: Application) : AndroidViewModel(app) {
 
     private val settings = (app as WPosterApp).settings
+
+    init {
+        // Blog gewechselt → Ergebnisse des alten Blogs verwerfen.
+        viewModelScope.launch {
+            settings.state.map { it.active?.id }.distinctUntilChanged().drop(1).collect { reset() }
+        }
+    }
     private val _state = MutableStateFlow(CalendarState())
     val state: StateFlow<CalendarState> = _state.asStateFlow()
     private val cache = HashMap<YearMonth, List<PostSummary>>()
@@ -44,6 +54,13 @@ class CalendarViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Beim Öffnen/Zurückkehren: angezeigten Monat still aktualisieren, Auswahl behalten. */
     fun open() = show(_state.value.month, force = true)
+
+    /** Beim Blog-Wechsel: zwischengespeicherte Monate verwerfen. */
+    fun reset() {
+        job?.cancel()
+        cache.clear()
+        _state.value = CalendarState()
+    }
 
     fun previousMonth() = show(_state.value.month.minusMonths(1))
     fun nextMonth() = show(_state.value.month.plusMonths(1))

@@ -44,16 +44,16 @@ fun PostCard(post: PostSummary, onClick: () -> Unit) {
             )
         }
         Column(Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
-            if (post.status == "future") {
+            if (post.status == "future" || post.status == "draft") {
                 Surface(
-                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    color = if (post.status == "draft") MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
                     shape = MaterialTheme.shapes.small,
                     modifier = Modifier.padding(bottom = 8.dp),
                 ) {
                     Text(
-                        stringResource(R.string.common_scheduled),
+                        if (post.status == "draft") stringResource(R.string.common_draft) else stringResource(R.string.common_scheduled),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        color = if (post.status == "draft") MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                     )
                 }
