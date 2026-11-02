@@ -1,6 +1,8 @@
 package de.formerdehne.wposter.data
 
 import de.formerdehne.wposter.BuildConfig
+import de.formerdehne.wposter.R
+import de.formerdehne.wposter.i18n.str
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -60,7 +62,7 @@ class WpClient(private val credentials: Credentials) {
 
     private fun url(route: String, query: Map<String, String> = emptyMap()): HttpUrl {
         val base = credentials.siteUrl.toHttpUrlOrNull()
-            ?: throw WpException("Ungültige Adresse: ${credentials.siteUrl}")
+            ?: throw WpException(str(R.string.error_invalid_address, credentials.siteUrl))
         val builder = base.newBuilder()
         if (credentials.useRestRoute) {
             if (base.pathSegments.lastOrNull() != "") builder.addPathSegment("")
@@ -84,7 +86,7 @@ class WpClient(private val credentials: Credentials) {
             if (!response.isSuccessful) throw errorFor(response.code, body)
             if (!body.trimStart().let { it.startsWith("{") || it.startsWith("[") }) {
                 throw WpException(
-                    "Der Server hat keine gültige Antwort der WordPress-API geliefert.",
+                    str(R.string.error_not_wp_api),
                     httpCode = response.code, notJson = true
                 )
             }
@@ -101,10 +103,10 @@ class WpClient(private val credentials: Credentials) {
         val caps = me.optJSONObject("capabilities")
         if (caps != null) {
             if (!caps.optBoolean("upload_files")) {
-                throw WpException("Dein WordPress-Benutzer darf keine Medien hochladen (mindestens Rolle „Autor“ nötig).")
+                throw WpException(str(R.string.error_no_upload_permission))
             }
             if (!caps.optBoolean("publish_posts")) {
-                throw WpException("Dein WordPress-Benutzer darf keine Beiträge veröffentlichen (mindestens Rolle „Autor“ nötig).")
+                throw WpException(str(R.string.error_no_publish_permission))
             }
         }
         val displayName = me.optString("name").ifBlank { credentials.username }
@@ -172,10 +174,7 @@ class WpClient(private val credentials: Credentials) {
         PostJson.edit(JSONObject(get("/wp/v2/posts/$id", mapOf("context" to "edit"))))
     } catch (e: WpException) {
         if (e.wpCode == "rest_forbidden_context" || e.httpCode == 403) {
-            throw WpException(
-                "Du darfst diesen Beitrag nicht bearbeiten. Beiträge anderer Personen bearbeiten " +
-                    "kann nur ein Benutzer mit der Rolle „Redakteur“ oder „Administrator“."
-            )
+            throw WpException(str(R.string.error_no_edit_permission))
         }
         throw e
     }
@@ -284,7 +283,7 @@ class WpClient(private val credentials: Credentials) {
          * keine Permalinks nutzt – danach ?rest_route=.
          */
         suspend fun probe(siteUrl: String, username: String, appPassword: String): SiteInfo {
-            val base = normalizeSiteUrl(siteUrl) ?: throw WpException("Bitte eine gültige Adresse eingeben, z. B. https://beispiel.de")
+            val base = normalizeSiteUrl(siteUrl) ?: throw WpException(str(R.string.error_enter_valid_address))
             var lastError: WpException? = null
             for (restRoute in listOf(false, true)) {
                 val client = WpClient(Credentials(base, username.trim(), appPassword.trim(), restRoute))
@@ -299,10 +298,7 @@ class WpClient(private val credentials: Credentials) {
                     throw e
                 }
             }
-            throw WpException(
-                "Unter dieser Adresse wurde keine WordPress-REST-API gefunden. " +
-                    "Stimmt die Adresse? (${lastError?.message ?: ""})"
-            )
+            throw WpException(str(R.string.error_no_rest_api, lastError?.message ?: ""))
         }
 
         fun errorFor(code: Int, body: String): WpException {
@@ -314,19 +310,18 @@ class WpClient(private val credentials: Credentials) {
                 ?.takeIf { it.isNotBlank() }
             val text = when {
                 wpCode in setOf("incorrect_password", "invalid_username", "invalid_email", "authentication_failed") ->
-                    "Benutzername oder Anwendungspasswort ist falsch."
+                    str(R.string.error_wrong_credentials)
                 wpCode == "application_passwords_disabled" ->
-                    "Anwendungspasswörter sind auf dieser WordPress-Seite deaktiviert."
+                    str(R.string.error_app_passwords_disabled)
                 wpCode == "rest_not_logged_in" || (code == 401 && wpCode == null) ->
-                    "Die Anmeldung kommt beim Server nicht an. Häufige Ursache: Der Webserver " +
-                        "entfernt den „Authorization“-Header. Abhilfe siehe Anleitung (README, Abschnitt .htaccess)."
+                    str(R.string.error_auth_not_received)
                 wpCode == "rest_cannot_create" || wpCode == "rest_cannot_publish" ->
-                    "Keine Berechtigung für diese Aktion. Hat dein WordPress-Benutzer mindestens die Rolle „Autor“?"
+                    str(R.string.error_no_permission)
                 wpCode == "rest_upload_user_quota_exceeded" ->
-                    "Der Speicherplatz für Uploads auf dem Server ist erschöpft."
-                code == 413 -> "Die Datei ist zu groß für den Server."
-                json == null -> "Unerwartete Antwort vom Server (HTTP $code)."
-                else -> wpMessage ?: "Fehler vom Server (HTTP $code)."
+                    str(R.string.error_quota_exceeded)
+                code == 413 -> str(R.string.error_file_too_large_server)
+                json == null -> str(R.string.error_unexpected_response, code)
+                else -> wpMessage ?: str(R.string.error_server, code)
             }
             return WpException(text, httpCode = code, wpCode = wpCode, notJson = json == null)
         }
@@ -362,7 +357,7 @@ private suspend fun Call.await(): Response = suspendCancellableCoroutine { cont 
         override fun onFailure(call: Call, e: IOException) {
             if (!cont.isCancelled) {
                 cont.resumeWithException(
-                    WpException("Keine Verbindung zum Server: ${e.message ?: e.javaClass.simpleName}")
+                    WpException(str(R.string.error_no_connection, e.message ?: e.javaClass.simpleName))
                 )
             }
         }

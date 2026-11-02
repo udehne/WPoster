@@ -31,9 +31,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import de.formerdehne.wposter.R
 import de.formerdehne.wposter.data.HtmlText
 import de.formerdehne.wposter.data.PostDetail
 import de.formerdehne.wposter.ui.Format
@@ -54,21 +56,21 @@ fun PostScreen(
             NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                 NavigationBarItem(
                     selected = false, onClick = onHome,
-                    icon = { Icon(Icons.Default.Home, null) }, label = { Text("Übersicht") },
+                    icon = { Icon(Icons.Default.Home, null) }, label = { Text(stringResource(R.string.common_overview)) },
                 )
                 NavigationBarItem(
                     selected = false, enabled = state.olderId != null,
                     onClick = { state.olderId?.let(onOlder) },
-                    icon = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null) }, label = { Text("Älterer") },
+                    icon = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null) }, label = { Text(stringResource(R.string.post_older)) },
                 )
                 NavigationBarItem(
                     selected = false, enabled = state.newerId != null,
                     onClick = { state.newerId?.let(onNewer) },
-                    icon = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }, label = { Text("Neuerer") },
+                    icon = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }, label = { Text(stringResource(R.string.post_newer)) },
                 )
                 NavigationBarItem(
                     selected = false, enabled = state.post != null, onClick = onEdit,
-                    icon = { Icon(Icons.Default.Edit, null) }, label = { Text("Bearbeiten") },
+                    icon = { Icon(Icons.Default.Edit, null) }, label = { Text(stringResource(R.string.common_edit)) },
                 )
             }
         },
@@ -80,7 +82,7 @@ fun PostScreen(
                     Modifier.padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text("Beitrag konnte nicht geladen werden", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.post_load_failed), style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(8.dp))
                     Text(
                         state.error,
@@ -89,7 +91,7 @@ fun PostScreen(
                         textAlign = TextAlign.Center,
                     )
                     Spacer(Modifier.height(16.dp))
-                    OutlinedButton(onClick = onRetry) { Text("Erneut versuchen") }
+                    OutlinedButton(onClick = onRetry) { Text(stringResource(R.string.common_retry)) }
                 }
                 else -> CircularProgressIndicator()
             }
@@ -106,7 +108,9 @@ private fun PostWebView(post: PostDetail, baseUrl: String) {
         bg = colors.background, fg = colors.onBackground, muted = colors.onSurfaceVariant,
         accent = colors.primary, line = colors.outlineVariant, quote = colors.tertiary,
     )
-    val html = buildPage(post, css, dark)
+    val scheduledLabel = stringResource(R.string.common_scheduled)
+    val untitledLabel = stringResource(R.string.common_untitled)
+    val html = buildPage(post, css, dark, scheduledLabel, untitledLabel)
     AndroidView(
         factory = { ctx ->
             WebView(ctx).apply {
@@ -148,10 +152,16 @@ private fun Color.css(): String {
     )
 }
 
-private fun buildPage(post: PostDetail, c: PageColors, dark: Boolean): String {
+private fun buildPage(
+    post: PostDetail,
+    c: PageColors,
+    dark: Boolean,
+    scheduledLabel: String,
+    untitledLabel: String,
+): String {
     val meta = listOfNotNull(post.author, Format.dateTime(post.date).ifBlank { null })
         .joinToString(" · ") { HtmlText.escape(it) }
-    val scheduled = if (post.status == "future") "<span class=\"badge\">Geplant</span>" else ""
+    val scheduled = if (post.status == "future") "<span class=\"badge\">${HtmlText.escape(scheduledLabel)}</span>" else ""
     return """
 <!doctype html>
 <html lang="de"><head>
@@ -184,7 +194,7 @@ private fun buildPage(post: PostDetail, c: PageColors, dark: Boolean): String {
 </style></head>
 <body>
 <header>
-  <h1 class="title">${HtmlText.escape(post.title.ifBlank { "(ohne Titel)" })}</h1>
+  <h1 class="title">${HtmlText.escape(post.title.ifBlank { untitledLabel })}</h1>
   <div class="meta">$meta$scheduled</div>
 </header>
 <article>${post.contentHtml}</article>

@@ -2,6 +2,8 @@ package de.formerdehne.wposter.data
 
 import android.content.Context
 import android.net.Uri
+import de.formerdehne.wposter.R
+import de.formerdehne.wposter.i18n.str
 import kotlinx.coroutines.sync.Mutex
 
 /** Aufbereiten + Hochladen einer Mediendatei. Wird vom Erstellen- und vom Bearbeiten-Editor genutzt. */
@@ -24,14 +26,14 @@ class MediaUploader(private val context: Context, private val settings: Settings
     ): UploadedMedia {
         val current = settings.state.value
         val credentials = current.credentials
-            ?: throw WpException("Bitte zuerst die Zugangsdaten in den Einstellungen eintragen.")
+            ?: throw WpException(str(R.string.error_credentials_missing))
         onPreparing()
         val prepared = preparer.prepare(uri, current.maxImageEdge)
         try {
             val sizeMb = prepared.file.length() / (1024.0 * 1024.0)
             if (sizeMb > current.maxUploadMb) {
                 throw WpException(
-                    "Datei ist zu groß (%.0f MB, erlaubt sind %d MB).".format(sizeMb, current.maxUploadMb)
+                    str(R.string.error_file_too_large, "%.0f".format(sizeMb), current.maxUploadMb)
                 )
             }
             onUploading()

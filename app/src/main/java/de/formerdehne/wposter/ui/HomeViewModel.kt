@@ -3,6 +3,8 @@ package de.formerdehne.wposter.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import de.formerdehne.wposter.R
+import de.formerdehne.wposter.i18n.str
 import de.formerdehne.wposter.WPosterApp
 import de.formerdehne.wposter.data.PostSummary
 import de.formerdehne.wposter.data.UpdateChecker
@@ -93,7 +95,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
-                        error = e.message ?: "Unbekannter Fehler",
+                        error = e.message ?: str(R.string.common_unknown_error),
                         initialLoading = false, refreshing = false, loadingMore = false,
                     )
                 }

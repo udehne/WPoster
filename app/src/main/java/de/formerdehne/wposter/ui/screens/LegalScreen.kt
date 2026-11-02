@@ -11,16 +11,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import de.formerdehne.wposter.R
 import de.formerdehne.wposter.ui.InfoDoc
 import de.formerdehne.wposter.ui.LegalTexts
 
 @Composable
 fun LegalScreen(doc: InfoDoc, onBack: () -> Unit) {
     val (title, sections) = when (doc) {
-        InfoDoc.HILFE -> "Hilfe" to LegalTexts.hilfe
-        InfoDoc.IMPRESSUM -> "Impressum" to LegalTexts.impressum
-        InfoDoc.DATENSCHUTZ -> "Datenschutzhinweis" to LegalTexts.datenschutz
+        InfoDoc.HILFE -> stringResource(R.string.common_help) to LegalTexts.help()
+        InfoDoc.IMPRESSUM -> stringResource(R.string.legal_title_notice) to LegalTexts.legalNotice()
+        InfoDoc.DATENSCHUTZ -> stringResource(R.string.legal_title_privacy) to LegalTexts.privacy()
     }
     Scaffold(topBar = { AppTopBar(title, onBack = onBack) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp)) {

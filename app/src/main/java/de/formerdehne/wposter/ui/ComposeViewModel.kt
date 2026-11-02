@@ -4,6 +4,8 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import de.formerdehne.wposter.R
+import de.formerdehne.wposter.i18n.str
 import de.formerdehne.wposter.WPosterApp
 import de.formerdehne.wposter.data.BlockBuilder
 import de.formerdehne.wposter.data.MediaUploader
@@ -90,7 +92,7 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
                     throw e
                 } catch (e: Exception) {
                     updateItem(item.key) {
-                        it.copy(state = ItemState.FAILED, error = "Die Datei konnte nicht gelesen werden.")
+                        it.copy(state = ItemState.FAILED, error = str(R.string.error_file_unreadable))
                     }
                 }
             }
@@ -159,7 +161,7 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
         val s = _state.value
         if (!s.canPublish) return
         val credentials = settings.state.value.credentials ?: run {
-            _state.update { it.copy(publishError = "Bitte zuerst die Zugangsdaten eintragen.") }
+            _state.update { it.copy(publishError = str(R.string.error_credentials_missing_short)) }
             return
         }
         _state.update { it.copy(publishing = true, publishError = null) }
@@ -175,7 +177,7 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _state.update { it.copy(publishing = false, publishError = e.message ?: "Unbekannter Fehler") }
+                _state.update { it.copy(publishing = false, publishError = e.message ?: str(R.string.common_unknown_error)) }
             }
         }
     }

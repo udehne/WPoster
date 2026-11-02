@@ -1,5 +1,6 @@
 package de.formerdehne.wposter.ui.screens
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -51,16 +52,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import de.formerdehne.wposter.BuildConfig
+import de.formerdehne.wposter.R
 import de.formerdehne.wposter.data.AppSettings
 import de.formerdehne.wposter.data.Credentials
 import de.formerdehne.wposter.data.SettingsRepository
 import de.formerdehne.wposter.data.WpClient
+import de.formerdehne.wposter.i18n.str
 import de.formerdehne.wposter.ui.InfoDoc
 import kotlinx.coroutines.launch
 
@@ -102,17 +106,17 @@ fun SettingsScreen(
                     info.displayName,
                 )
                 url = info.siteUrl
-                result = true to "Verbunden mit „${info.siteName}“ als ${info.displayName}."
+                result = true to str(R.string.settings_connected, info.siteName, info.displayName)
                 onSaved(!wasConfigured)
             } catch (e: Exception) {
-                result = false to (e.message ?: "Unbekannter Fehler")
+                result = false to (e.message ?: str(R.string.common_unknown_error))
             } finally {
                 checking = false
             }
         }
     }
 
-    Scaffold(topBar = { AppTopBar("Einstellungen", onBack = onBack) }) { padding ->
+    Scaffold(topBar = { AppTopBar(stringResource(R.string.settings_title), onBack = onBack) }) { padding ->
         Column(
             Modifier
                 .fillMaxSize()
@@ -122,10 +126,10 @@ fun SettingsScreen(
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            SectionLabel("WordPress-Seite")
+            SectionLabel(stringResource(R.string.settings_section_site))
             OutlinedTextField(
                 value = url, onValueChange = { url = it; result = null },
-                label = { Text("Adresse") }, placeholder = { Text("https://beispiel.de") },
+                label = { Text(stringResource(R.string.settings_address)) }, placeholder = { Text(stringResource(R.string.settings_address_placeholder)) },
                 singleLine = true,
                 trailingIcon = { InfoButton { help = FieldHelp.URL } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
@@ -133,14 +137,14 @@ fun SettingsScreen(
             )
             OutlinedTextField(
                 value = user, onValueChange = { user = it; result = null },
-                label = { Text("Benutzername") }, singleLine = true,
+                label = { Text(stringResource(R.string.settings_username)) }, singleLine = true,
                 trailingIcon = { InfoButton { help = FieldHelp.USER } },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 value = password, onValueChange = { password = it; result = null },
-                label = { Text("Anwendungspasswort") },
+                label = { Text(stringResource(R.string.settings_app_password)) },
                 placeholder = { Text("xxxx xxxx xxxx xxxx xxxx xxxx") },
                 singleLine = true,
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
@@ -148,7 +152,7 @@ fun SettingsScreen(
                 trailingIcon = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TextButton(onClick = { showPassword = !showPassword }) {
-                            Text(if (showPassword) "Verbergen" else "Zeigen")
+                            Text(if (showPassword) stringResource(R.string.settings_hide) else stringResource(R.string.settings_show))
                         }
                         InfoButton { help = FieldHelp.PASSWORD }
                     }
@@ -160,9 +164,9 @@ fun SettingsScreen(
                 if (checking) {
                     CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
                     Spacer(Modifier.width(12.dp))
-                    Text("Verbindung wird geprüft …")
+                    Text(stringResource(R.string.settings_checking))
                 } else {
-                    Text("Verbindung prüfen & speichern")
+                    Text(stringResource(R.string.settings_check_save))
                 }
             }
 
@@ -189,13 +193,10 @@ fun SettingsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("So bekommst du ein Anwendungspasswort", style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.settings_howto_title), style = MaterialTheme.typography.titleSmall)
                     }
                     Text(
-                        "1. Im Browser bei WordPress anmelden.\n" +
-                            "2. Benutzer → Profil öffnen und nach unten zu „Anwendungspasswörter“ scrollen.\n" +
-                            "3. Als Namen z. B. „WPoster Handy“ eingeben und „Neues Anwendungspasswort hinzufügen“ tippen.\n" +
-                            "4. Das angezeigte Passwort hier einfügen (Leerzeichen sind egal).",
+                        stringResource(R.string.settings_howto_text),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -203,7 +204,7 @@ fun SettingsScreen(
                         Icon(Icons.Default.Lock, null, tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            "Wird verschlüsselt nur auf diesem Gerät gespeichert.",
+                            stringResource(R.string.settings_stored_encrypted),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.outline,
                         )
@@ -212,11 +213,11 @@ fun SettingsScreen(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SectionLabel("Fotos", Modifier.weight(1f))
+                SectionLabel(stringResource(R.string.settings_section_photos), Modifier.weight(1f))
                 InfoButton { help = FieldHelp.IMAGE_SIZE }
             }
             Text(
-                "Maximale Kantenlänge beim Hochladen. Standort und andere Metadaten werden immer entfernt.",
+                stringResource(R.string.settings_photos_text),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -227,33 +228,33 @@ fun SettingsScreen(
                         selected = settings.maxImageEdge == edge,
                         onClick = { repository.setMaxImageEdge(edge) },
                         shape = SegmentedButtonDefaults.itemShape(i, options.size),
-                    ) { Text("$edge px") }
+                    ) { Text(stringResource(R.string.settings_px, edge)) }
                 }
             }
 
-            SectionLabel("Uploads")
+            SectionLabel(stringResource(R.string.settings_section_uploads))
             OutlinedTextField(
                 value = maxUpload,
                 onValueChange = { v ->
                     maxUpload = v.filter { it.isDigit() }.take(4)
                     maxUpload.toIntOrNull()?.let { repository.setMaxUploadMb(it) }
                 },
-                label = { Text("Maximale Dateigröße (MB)") },
+                label = { Text(stringResource(R.string.settings_max_file_size_mb)) },
                 trailingIcon = { InfoButton { help = FieldHelp.MAX_UPLOAD } },
-                supportingText = { Text("Siehe WordPress → Medien → Datei hinzufügen.") },
+                supportingText = { Text(stringResource(R.string.settings_max_file_size_hint)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            SectionLabel("App")
+            SectionLabel(stringResource(R.string.settings_section_app))
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 ListItem(
-                    headlineContent = { Text("Nach Updates suchen") },
-                    supportingContent = { Text("Fragt gelegentlich bei GitHub nach einer neuen Version.") },
+                    headlineContent = { Text(stringResource(R.string.settings_check_updates)) },
+                    supportingContent = { Text(stringResource(R.string.settings_check_updates_text)) },
                     trailingContent = {
                         Switch(checked = settings.checkUpdates, onCheckedChange = repository::setCheckUpdates)
                     },
@@ -261,19 +262,19 @@ fun SettingsScreen(
                 )
             }
 
-            SectionLabel("Rechtliches")
+            SectionLabel(stringResource(R.string.settings_section_legal))
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                LegalLink("Impressum") { onLegal(InfoDoc.IMPRESSUM) }
+                LegalLink(stringResource(R.string.legal_title_notice)) { onLegal(InfoDoc.IMPRESSUM) }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                LegalLink("Datenschutzhinweis") { onLegal(InfoDoc.DATENSCHUTZ) }
+                LegalLink(stringResource(R.string.legal_title_privacy)) { onLegal(InfoDoc.DATENSCHUTZ) }
             }
 
             if (creds != null) {
                 OutlinedButton(onClick = { confirmLogout = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Zugangsdaten von diesem Gerät löschen")
+                    Text(stringResource(R.string.settings_delete_credentials))
                 }
             }
             Text(
@@ -289,26 +290,26 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { help = null },
             icon = { Icon(Icons.Default.Info, null) },
-            title = { Text(h.title) },
-            text = { Text(h.text) },
-            confirmButton = { TextButton(onClick = { help = null }) { Text("Verstanden") } },
+            title = { Text(stringResource(h.title)) },
+            text = { Text(stringResource(h.text)) },
+            confirmButton = { TextButton(onClick = { help = null }) { Text(stringResource(R.string.settings_got_it)) } },
         )
     }
 
     if (confirmLogout) {
         AlertDialog(
             onDismissRequest = { confirmLogout = false },
-            title = { Text("Zugangsdaten löschen?") },
-            text = { Text("Das Anwendungspasswort bleibt in WordPress gültig, bis du es dort widerrufst.") },
+            title = { Text(stringResource(R.string.settings_delete_credentials_title)) },
+            text = { Text(stringResource(R.string.settings_delete_credentials_text)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmLogout = false
                     repository.clearCredentials()
                     password = ""
                     result = null
-                }) { Text("Löschen") }
+                }) { Text(stringResource(R.string.common_delete)) }
             },
-            dismissButton = { TextButton(onClick = { confirmLogout = false }) { Text("Abbrechen") } },
+            dismissButton = { TextButton(onClick = { confirmLogout = false }) { Text(stringResource(R.string.common_cancel)) } },
         )
     }
 }
@@ -326,49 +327,15 @@ private fun LegalLink(text: String, onClick: () -> Unit) {
 @Composable
 private fun InfoButton(onClick: () -> Unit) {
     IconButton(onClick = onClick) {
-        Icon(Icons.Default.Info, contentDescription = "Hilfe", tint = MaterialTheme.colorScheme.outline)
+        Icon(Icons.Default.Info, contentDescription = stringResource(R.string.common_help), tint = MaterialTheme.colorScheme.outline)
     }
 }
 
 /** Kurze Hilfetexte zu den Einrichtungsfeldern. */
-private enum class FieldHelp(val title: String, val text: String) {
-    URL(
-        "Adresse der WordPress-Seite",
-        "Die Adresse, unter der dein Blog im Browser erreichbar ist, z. B. „https://udehne.de“.\n\n" +
-            "Am einfachsten: Blog im Browser öffnen und die Adresse aus der Adresszeile kopieren – " +
-            "ohne „/wp-admin“ oder Unterseiten. „https://“ ergänzt die App bei Bedarf selbst."
-    ),
-    USER(
-        "Benutzername",
-        "Dein WordPress-Anmeldename – also der Name, mit dem du dich unter „/wp-admin“ anmeldest " +
-            "(nicht der angezeigte Name).\n\n" +
-            "Zu finden in WordPress unter Benutzer → Profil → „Benutzername“ (ganz oben, grau, nicht änderbar). " +
-            "Der Benutzer braucht mindestens die Rolle „Autor“."
-    ),
-    PASSWORD(
-        "Anwendungspasswort",
-        "Nicht dein normales WordPress-Passwort, sondern ein eigenes Passwort nur für diese App.\n\n" +
-            "So erstellst du es:\n" +
-            "1. Im Browser bei WordPress anmelden (…/wp-admin).\n" +
-            "2. Links auf Benutzer → Profil.\n" +
-            "3. Ganz nach unten zu „Anwendungspasswörter“ scrollen.\n" +
-            "4. Namen eingeben, z. B. „WPoster Handy“, und „Neues Anwendungspasswort hinzufügen“ tippen.\n" +
-            "5. Das angezeigte Passwort (24 Zeichen in 6 Gruppen) kopieren und hier einfügen. " +
-            "Es wird nur einmal angezeigt; Leerzeichen sind egal.\n\n" +
-            "Fehlt der Abschnitt, ist die Funktion auf deiner Seite deaktiviert (z. B. durch ein Sicherheits-Plugin). " +
-            "Widerrufen kannst du das Passwort jederzeit an derselben Stelle."
-    ),
-    IMAGE_SIZE(
-        "Bildgröße",
-        "Fotos werden vor dem Hochladen auf diese maximale Kantenlänge verkleinert. Das spart Zeit, " +
-            "mobiles Datenvolumen und Speicherplatz auf dem Server.\n\n" +
-            "2560 px (Standard) ist für Blog-Fotos – auch auf großen Bildschirmen – völlig ausreichend. " +
-            "Standort (GPS) und andere Metadaten werden in jedem Fall entfernt."
-    ),
-    MAX_UPLOAD(
-        "Maximale Dateigröße",
-        "Die größte Datei, die dein Server annimmt. Größere Videos weist die App schon vor dem Hochladen ab.\n\n" +
-            "Zu finden in WordPress unter Medien → Datei hinzufügen: Dort steht „Maximale Dateigröße für Uploads: … MB“. " +
-            "Diesen Wert hier eintragen."
-    ),
+private enum class FieldHelp(@StringRes val title: Int, @StringRes val text: Int) {
+    URL(R.string.settings_help_url_title, R.string.settings_help_url_text),
+    USER(R.string.settings_username, R.string.settings_help_user_text),
+    PASSWORD(R.string.settings_app_password, R.string.settings_help_password_text),
+    IMAGE_SIZE(R.string.settings_help_image_title, R.string.settings_help_image_text),
+    MAX_UPLOAD(R.string.settings_help_upload_title, R.string.settings_help_upload_text),
 }

@@ -53,11 +53,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import de.formerdehne.wposter.R
 import de.formerdehne.wposter.ui.DraftState
 import de.formerdehne.wposter.ui.ItemState
 import de.formerdehne.wposter.ui.MediaItem
@@ -84,7 +86,7 @@ fun ComposeScreen(
     }
 
     Scaffold(
-        topBar = { AppTopBar(title = "Neuer Beitrag", onBack = onBack) },
+        topBar = { AppTopBar(title = stringResource(R.string.common_new_post), onBack = onBack) },
         bottomBar = { PublishBar(state, onPublish) },
     ) { padding ->
         Column(
@@ -98,7 +100,7 @@ fun ComposeScreen(
             OutlinedTextField(
                 value = state.title,
                 onValueChange = onTitle,
-                label = { Text("Überschrift") },
+                label = { Text(stringResource(R.string.common_title)) },
                 singleLine = true,
                 textStyle = MaterialTheme.typography.titleMedium,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
@@ -107,18 +109,18 @@ fun ComposeScreen(
             OutlinedTextField(
                 value = state.before,
                 onValueChange = onBefore,
-                label = { Text("Text vor den Fotos (optional)") },
+                label = { Text(stringResource(R.string.compose_text_before)) },
                 minLines = 3,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth(),
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SectionLabel("Fotos & Videos (${state.items.size})", Modifier.weight(1f))
+                SectionLabel(stringResource(R.string.compose_media_section, state.items.size), Modifier.weight(1f))
                 TextButton(onClick = pickMedia) {
                     Icon(Icons.Default.Add, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Hinzufügen")
+                    Text(stringResource(R.string.common_add))
                 }
             }
 
@@ -134,9 +136,9 @@ fun ComposeScreen(
                     ) {
                         Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
                         Spacer(Modifier.height(8.dp))
-                        Text("Fotos oder Videos auswählen", style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.compose_pick_media), style = MaterialTheme.typography.titleSmall)
                         Text(
-                            "Sie werden sofort hochgeladen.",
+                            stringResource(R.string.compose_pick_media_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -168,7 +170,7 @@ fun ComposeScreen(
             OutlinedTextField(
                 value = state.after,
                 onValueChange = onAfter,
-                label = { Text("Text nach den Fotos (optional)") },
+                label = { Text(stringResource(R.string.compose_text_after)) },
                 minLines = 3,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth(),
@@ -181,7 +183,7 @@ fun ComposeScreen(
         AlertDialog(
             onDismissRequest = {},
             confirmButton = {},
-            title = { Text("Wird veröffentlicht …") },
+            title = { Text(stringResource(R.string.compose_publishing)) },
             text = {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             },
@@ -190,9 +192,9 @@ fun ComposeScreen(
     state.publishError?.let { message ->
         AlertDialog(
             onDismissRequest = onDismissError,
-            title = { Text("Veröffentlichen fehlgeschlagen") },
+            title = { Text(stringResource(R.string.compose_publish_failed)) },
             text = { Text(message) },
-            confirmButton = { TextButton(onClick = onDismissError) { Text("OK") } },
+            confirmButton = { TextButton(onClick = onDismissError) { Text(stringResource(R.string.common_ok)) } },
         )
     }
 }
@@ -208,9 +210,9 @@ private fun PublishBar(state: DraftState, onPublish: () -> Unit) {
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             val hint = when {
-                state.pendingUploads > 0 -> "Noch ${state.pendingUploads} Upload(s) laufen …"
-                state.failedUploads > 0 -> "Bitte fehlgeschlagene Uploads wiederholen oder entfernen."
-                state.title.isBlank() -> "Bitte eine Überschrift eingeben."
+                state.pendingUploads > 0 -> stringResource(R.string.common_hint_pending, state.pendingUploads)
+                state.failedUploads > 0 -> stringResource(R.string.common_hint_failed)
+                state.title.isBlank() -> stringResource(R.string.common_hint_title)
                 else -> null
             }
             if (hint != null) {
@@ -228,7 +230,7 @@ private fun PublishBar(state: DraftState, onPublish: () -> Unit) {
             ) {
                 Icon(Icons.Default.Send, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(10.dp))
-                Text("Veröffentlichen", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.common_publish), fontWeight = FontWeight.SemiBold)
             }
         }
     }

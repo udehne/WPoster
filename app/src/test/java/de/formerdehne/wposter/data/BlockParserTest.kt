@@ -65,10 +65,11 @@ class BlockParserTest {
         assertEquals("Urlaub 2026", h.text)
         assertTrue(h.hasFormatting)
         val gallery = blocks[1] as ParsedBlock.Other
-        assertEquals("Galerie", gallery.label)
-        assertEquals("2 Bilder", gallery.summary)
+        assertEquals("gallery", gallery.blockName)
+        assertEquals(2, gallery.imageCount)
+        assertEquals("", gallery.summary)
         assertTrue(gallery.raw.endsWith("<!-- /wp:gallery -->"))
-        assertEquals("Trennlinie", (blocks[2] as ParsedBlock.Other).label)
+        assertEquals("separator", (blocks[2] as ParsedBlock.Other).blockName)
         val p = blocks[3] as ParsedBlock.Paragraph
         assertEquals("Mit Link", p.text)
         assertTrue(p.hasFormatting)
@@ -78,7 +79,7 @@ class BlockParserTest {
     fun classicContentBecomesOneBlock() {
         val blocks = BlockParser.parse("<p>Alter Beitrag</p>\n<img src=\"x.jpg\">")
         assertEquals(1, blocks.size)
-        assertEquals("Klassischer Inhalt", (blocks[0] as ParsedBlock.Other).label)
+        assertEquals(ParsedBlock.Other.FREEFORM, (blocks[0] as ParsedBlock.Other).blockName)
     }
 
     @Test

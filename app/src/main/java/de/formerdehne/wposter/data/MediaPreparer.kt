@@ -13,6 +13,8 @@ import android.media.MediaMuxer
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.exifinterface.media.ExifInterface
+import de.formerdehne.wposter.R
+import de.formerdehne.wposter.i18n.str
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -45,7 +47,7 @@ class MediaPreparer(private val context: Context) {
             mime.startsWith("video/") -> prepareVideo(uri, mime, baseName)
             mime == "image/gif" -> copyAsIs(uri, "$baseName.gif", mime)
             mime.startsWith("image/") -> prepareImage(uri, baseName, maxImageEdge)
-            else -> throw WpException("Dieser Dateityp wird nicht unterstützt ($mime).")
+            else -> throw WpException(str(R.string.error_unsupported_type, mime))
         }
     }
 
@@ -55,7 +57,7 @@ class MediaPreparer(private val context: Context) {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         open(uri).use { BitmapFactory.decodeStream(it, null, bounds) }
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
-            throw WpException("Das Bild konnte nicht gelesen werden.")
+            throw WpException(str(R.string.error_image_unreadable))
         }
         val orientation = try {
             open(uri).use { ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL) }
@@ -67,7 +69,7 @@ class MediaPreparer(private val context: Context) {
         while (max(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxEdge) sample *= 2
         val decoded = open(uri).use {
             BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
-        } ?: throw WpException("Das Bild konnte nicht gelesen werden.")
+        } ?: throw WpException(str(R.string.error_image_unreadable))
         coroutineContext.ensureActive()
 
         val longest = max(decoded.width, decoded.height)
@@ -140,7 +142,7 @@ class MediaPreparer(private val context: Context) {
                 extractor.selectTrack(i)
                 trackMap[i] = m.addTrack(format)
             }
-            if (trackMap.isEmpty()) throw WpException("Das Video enthält keine lesbaren Spuren.")
+            if (trackMap.isEmpty()) throw WpException(str(R.string.error_video_no_tracks))
             if (!webm) m.setOrientationHint(rotation)
             m.start()
 
@@ -168,7 +170,7 @@ class MediaPreparer(private val context: Context) {
             out.delete(); throw e
         } catch (e: Exception) {
             out.delete()
-            throw WpException("Das Video konnte nicht verarbeitet werden (${e.javaClass.simpleName}).")
+            throw WpException(str(R.string.error_video_processing, e.javaClass.simpleName))
         } finally {
             try { muxer?.release() } catch (_: Exception) {}
             extractor.release()
@@ -200,7 +202,7 @@ class MediaPreparer(private val context: Context) {
     }
 
     private fun open(uri: Uri) = resolver.openInputStream(uri)
-        ?: throw WpException("Die Datei konnte nicht geöffnet werden.")
+        ?: throw WpException(str(R.string.error_file_open))
 
     private fun displayName(uri: Uri): String = if (uri.scheme == "file") {
         uri.lastPathSegment?.substringAfter('_') ?: "medium"

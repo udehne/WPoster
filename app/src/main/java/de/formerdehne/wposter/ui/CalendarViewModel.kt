@@ -3,6 +3,8 @@ package de.formerdehne.wposter.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import de.formerdehne.wposter.R
+import de.formerdehne.wposter.i18n.str
 import de.formerdehne.wposter.WPosterApp
 import de.formerdehne.wposter.data.PostSummary
 import de.formerdehne.wposter.data.WpClient
@@ -86,7 +88,7 @@ class CalendarViewModel(app: Application) : AndroidViewModel(app) {
                 throw e
             } catch (e: Exception) {
                 if (silent) return@launch // alte Daten bleiben sichtbar
-                _state.value = CalendarState(month = month, error = e.message ?: "Unbekannter Fehler")
+                _state.value = CalendarState(month = month, error = e.message ?: str(R.string.common_unknown_error))
             }
         }
     }

@@ -3,6 +3,8 @@ package de.formerdehne.wposter.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import de.formerdehne.wposter.R
+import de.formerdehne.wposter.i18n.str
 import de.formerdehne.wposter.WPosterApp
 import de.formerdehne.wposter.data.PostDetail
 import de.formerdehne.wposter.data.WpClient
@@ -52,7 +54,7 @@ class PostViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _state.update { it.copy(loading = false, error = e.message ?: "Unbekannter Fehler") }
+                _state.update { it.copy(loading = false, error = e.message ?: str(R.string.common_unknown_error)) }
             }
         }
     }

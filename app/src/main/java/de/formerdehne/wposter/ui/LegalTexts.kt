@@ -1,9 +1,18 @@
 package de.formerdehne.wposter.ui
 
+import java.util.Locale
+
 /** Abschnitt eines Rechtstexts: Überschrift (optional) + Absätze. */
 data class LegalSection(val heading: String?, val body: List<String>)
 
 object LegalTexts {
+
+    private val isGerman get() = Locale.getDefault().language == "de"
+
+    /** Texte in der Gerätesprache: Deutsch für "de", sonst Englisch. */
+    fun help(): List<LegalSection> = if (isGerman) hilfe else helpEn
+    fun legalNotice(): List<LegalSection> = if (isGerman) impressum else impressumEn
+    fun privacy(): List<LegalSection> = if (isGerman) datenschutz else privacyEn
 
     val hilfe = listOf(
         LegalSection(
@@ -223,5 +232,231 @@ object LegalTexts {
             )
         ),
         LegalSection("Stand", listOf("November 2026")),
+    )
+
+    // ---------- English ----------
+
+    val helpEn = listOf(
+        LegalSection(
+            "Writing a new post",
+            listOf(
+                "On the home screen, tap the large +. Add photos and videos – they are uploaded right " +
+                    "away –, enter a title and, optionally, text before and after the photos, then tap “Publish”.",
+                "If you leave the editor, the draft is kept. It appears at the top of the post list, " +
+                    "where you can continue or discard it."
+            )
+        ),
+        LegalSection(
+            "Sharing straight from your gallery",
+            listOf(
+                "In Google Photos, your gallery or similar, select photos/videos, tap “Share” and choose WPoster. " +
+                    "The app opens the editor and starts uploading right away."
+            )
+        ),
+        LegalSection(
+            "Viewing posts",
+            listOf(
+                "The home screen shows the latest posts with featured image, author and date. Pull the list " +
+                    "down to refresh; older posts are loaded as you scroll.",
+                "Tap a post to see it in full. At the bottom you can go to the overview, to the older " +
+                    "or newer post, or into the editor."
+            )
+        ),
+        LegalSection(
+            "Searching",
+            listOf(
+                "Menu ☰ → Search. From two letters on, the headings and text of all posts are searched; " +
+                    "results appear just like on the home screen and can be tapped."
+            )
+        ),
+        LegalSection(
+            "Calendar",
+            listOf(
+                "Menu ☰ → Calendar. Days with posts are highlighted; if there are several posts, the " +
+                    "number is shown below. Use the arrows to move through the months.",
+                "Below the calendar you'll find all posts of the month. Tap a highlighted day to see only " +
+                    "its posts; tap it again (or “Whole month”) to see all of them."
+            )
+        ),
+        LegalSection(
+            "Editing a post",
+            listOf(
+                "In the editor you can change the title, text and subheadings, add photos and videos, " +
+                    "move them with ▲▼ and remove them with ✕.",
+                "The star ☆ on a photo makes it the featured image (shown in the overview).",
+                "The publish date determines the order of posts. If it is in the future, " +
+                    "the post is scheduled and only becomes visible then.",
+                "Content the app can't edit (e.g. galleries or columns from the web editor) " +
+                    "is kept unchanged and can be moved or removed.",
+                "Text with formatting (e.g. links) stays unchanged as long as you don't edit it. " +
+                    "If you change the text, it is saved as plain text.",
+                "Photos removed from a post remain in the WordPress media library.",
+                "Every author may edit their own posts. To edit other people's posts, your " +
+                    "WordPress user needs the “Editor” or “Administrator” role."
+            )
+        ),
+        LegalSection(
+            "Privacy for photos",
+            listOf(
+                "Before uploading, the app removes the location (GPS) and other metadata from photos and videos. " +
+                    "Photos are also scaled down to the size chosen in Settings."
+            )
+        ),
+        LegalSection(
+            "Problems?",
+            listOf(
+                "“The login isn't reaching the server”: the web server strips the authorization header. Add the " +
+                    "following line to your blog's .htaccess, above “# BEGIN WordPress”:\n" +
+                    "SetEnvIf Authorization \"(.*)\" HTTP_AUTHORIZATION=${'$'}1",
+                "“Username or application password is incorrect”: create a new application password in " +
+                    "WordPress under Users → Profile and enter it in Settings.",
+                "“File is too large”: shorten the video, or raise the upload limit with your host and adjust it in Settings.",
+                "Images aren't displayed: some security plugins also block image files for apps. " +
+                    "In that case, allow the folder wp-content/uploads in the plugin.",
+                "More help: kontakt@former-dehne.de"
+            )
+        ),
+    )
+
+    val impressumEn = listOf(
+        LegalSection(
+            "Information pursuant to § 5 DDG (German Digital Services Act)",
+            listOf("FORMER.DEHNE\nUli Dehne und Simon Former\nWaldstraße 3\n22955 Hoisdorf\nGermany")
+        ),
+        LegalSection("Contact", listOf("Email: kontakt@former-dehne.de")),
+        LegalSection(
+            "Responsible for the app",
+            listOf("Uli Dehne and Simon Former, address as above.")
+        ),
+        LegalSection(
+            "Content on connected WordPress sites",
+            listOf(
+                "WPoster is a tool that lets users publish posts on their own WordPress site. " +
+                    "The operator of the respective WordPress site is solely responsible for the content published there."
+            )
+        ),
+        LegalSection(
+            "Liability for links",
+            listOf(
+                "On request, the app opens content from external websites (e.g. your WordPress site). " +
+                    "We have no influence on their content; the respective provider is always responsible for it."
+            )
+        ),
+        LegalSection(
+            "License",
+            listOf(
+                "WPoster is free software: you can redistribute it and/or modify it under the terms of the " +
+                    "GNU General Public License, version 3. The app is provided without any warranty. " +
+                    "Details: https://www.gnu.org/licenses/gpl-3.0.html"
+            )
+        ),
+        LegalSection(
+            "Trademarks",
+            listOf(
+                "WordPress is a registered trademark of the WordPress Foundation. WPoster is an " +
+                    "independent project and is not affiliated with the WordPress Foundation or Automattic."
+            )
+        ),
+    )
+
+    val privacyEn = listOf(
+        LegalSection(
+            null,
+            listOf(
+                "This is a translation of the German privacy policy. In case of doubt, the German version is authoritative."
+            )
+        ),
+        LegalSection(
+            "1. Controllers",
+            listOf(
+                "FORMER.DEHNE, Uli Dehne und Simon Former, Waldstraße 3, 22955 Hoisdorf, Germany, " +
+                    "email: kontakt@former-dehne.de"
+            )
+        ),
+        LegalSection(
+            "2. Summary",
+            listOf(
+                "WPoster transfers data exclusively between your device and the WordPress site " +
+                    "that you enter in the app yourself. As the provider, we do not operate a server of our own " +
+                    "for the app and do not receive any of your data.",
+                "The app contains no advertising, no tracking, no analytics tools and no crash reports " +
+                    "sent to third parties. The only exception is the optional update check via GitHub (section 6)."
+            )
+        ),
+        LegalSection(
+            "3. Login details",
+            listOf(
+                "The WordPress site address, username and application password are stored only on your " +
+                    "device. The application password is encrypted with a key from the Android Keystore. " +
+                    "The data is excluded from Android backups.",
+                "The login details are sent encrypted (HTTPS) to your WordPress site with every request, " +
+                    "so that it recognizes you as an authorized user.",
+                "You can delete the login details in Settings at any time. They are also removed when " +
+                    "you uninstall the app. In addition, you can revoke an application password at any time " +
+                    "in your WordPress profile."
+            )
+        ),
+        LegalSection(
+            "4. Photos, videos and text",
+            listOf(
+                "The app only accesses photos and videos that you explicitly select – via the Android " +
+                    "photo picker or via “Share” from another app. Permission to access your entire gallery " +
+                    "is not required.",
+                "Before uploading, photos are scaled down and re-saved on the device. In the process, " +
+                    "all embedded metadata is removed, in particular the location (GPS), camera data and " +
+                    "time of capture. For videos, the video and audio tracks are copied into a new file " +
+                    "without metadata such as the location.",
+                "The processed files are kept only briefly in the app's cache and are deleted after " +
+                    "uploading or the next time the app starts.",
+                "Photos, videos, title and text are transferred to your WordPress site and published " +
+                    "there as a post. The operator of the WordPress site is responsible for any further " +
+                    "processing there; the privacy policy of that site applies."
+            )
+        ),
+        LegalSection(
+            "5. Connection data",
+            listOf(
+                "When establishing a connection, your device transmits technically necessary data (e.g. IP address, " +
+                    "time, app identifier in the user agent) to the server of your WordPress site. This data " +
+                    "is processed solely by the operator of that server or its hosting provider."
+            )
+        ),
+        LegalSection(
+            "6. Update check",
+            listOf(
+                "If “Check for updates” is turned on (default), the app asks GitHub (GitHub Inc., a Microsoft " +
+                    "company) for the latest version at most every six hours. In doing so, technically necessary " +
+                    "connection data such as your IP address is transmitted to GitHub; no other data is sent. " +
+                    "GitHub's privacy statement applies. You can turn off the check in Settings at any time."
+            )
+        ),
+        LegalSection(
+            "7. Permissions",
+            listOf(
+                "Internet access – to send media and posts to your WordPress site.",
+                "Notifications – to show the progress of running uploads, even when the app is in the " +
+                    "background. This permission is optional.",
+                "The app requires no other permissions."
+            )
+        ),
+        LegalSection(
+            "8. People shown in photos",
+            listOf(
+                "Please only publish photos and videos of other people with their consent. " +
+                    "For children, the consent of their parents or legal guardians is required."
+            )
+        ),
+        LegalSection(
+            "9. Your rights",
+            listOf(
+                "Under the GDPR, you have the right of access (Art. 15), rectification (Art. 16), " +
+                    "erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20) " +
+                    "and objection (Art. 21). As we, the provider, do not store any data about you, please " +
+                    "address requests concerning content on a WordPress site to its operator.",
+                "You also have the right to lodge a complaint with a data protection supervisory authority, e.g. the " +
+                    "Unabhängiges Landeszentrum für Datenschutz Schleswig-Holstein (ULD), Kiel."
+            )
+        ),
+        LegalSection("Last updated", listOf("November 2026")),
     )
 }

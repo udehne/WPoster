@@ -25,9 +25,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.text.HtmlCompat
+import de.formerdehne.wposter.R
 import de.formerdehne.wposter.data.PublishedPost
 
 @Composable
@@ -44,7 +46,7 @@ fun SuccessScreen(post: PublishedPost?, onView: (Long) -> Unit, onNewPost: () ->
                 }
             }
             Spacer(Modifier.height(24.dp))
-            Text("Veröffentlicht", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.success_title), style = MaterialTheme.typography.headlineMedium)
             if (post != null) {
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -57,17 +59,17 @@ fun SuccessScreen(post: PublishedPost?, onView: (Long) -> Unit, onNewPost: () ->
             Spacer(Modifier.height(40.dp))
             if (post != null) {
                 Button(onClick = { onView(post.id) }, modifier = Modifier.fillMaxWidth().height(52.dp)) {
-                    Text("Beitrag ansehen")
+                    Text(stringResource(R.string.success_view_post))
                 }
                 Spacer(Modifier.height(12.dp))
             }
             OutlinedButton(onClick = onNewPost, modifier = Modifier.fillMaxWidth().height(52.dp)) {
                 Icon(Icons.Default.Add, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Weiteren Beitrag anlegen")
+                Text(stringResource(R.string.success_new_post))
             }
             Spacer(Modifier.height(8.dp))
-            TextButton(onClick = onDone) { Text("Zur Übersicht") }
+            TextButton(onClick = onDone) { Text(stringResource(R.string.success_to_overview)) }
         }
     }
 }

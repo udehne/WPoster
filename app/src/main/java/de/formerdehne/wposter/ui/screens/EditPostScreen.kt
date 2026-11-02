@@ -55,10 +55,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import de.formerdehne.wposter.R
 import de.formerdehne.wposter.ui.EditBlock
 import de.formerdehne.wposter.ui.EditState
 import de.formerdehne.wposter.ui.Format
@@ -98,7 +100,7 @@ fun EditPostScreen(
     }
 
     Scaffold(
-        topBar = { AppTopBar("Beitrag bearbeiten", onBack = ::tryLeave) },
+        topBar = { AppTopBar(stringResource(R.string.edit_title), onBack = ::tryLeave) },
         bottomBar = {
             if (!state.loading && state.loadError == null) SaveBar(state, onSave)
         },
@@ -112,7 +114,7 @@ fun EditPostScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Text("Beitrag kann nicht bearbeitet werden", style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.edit_load_failed), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(8.dp))
                 Text(
                     state.loadError,
@@ -121,7 +123,7 @@ fun EditPostScreen(
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(16.dp))
-                OutlinedButton(onClick = onReload) { Text("Erneut versuchen") }
+                OutlinedButton(onClick = onReload) { Text(stringResource(R.string.common_retry)) }
             }
             else -> Column(
                 Modifier
@@ -134,7 +136,7 @@ fun EditPostScreen(
                 OutlinedTextField(
                     value = state.title,
                     onValueChange = onTitle,
-                    label = { Text("Überschrift") },
+                    label = { Text(stringResource(R.string.common_title)) },
                     textStyle = MaterialTheme.typography.titleMedium,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     modifier = Modifier.fillMaxWidth(),
@@ -142,10 +144,10 @@ fun EditPostScreen(
 
                 DateCard(state, onClick = { pickDate = true })
 
-                SectionLabel("Inhalt")
+                SectionLabel(stringResource(R.string.edit_content))
                 if (state.blocks.isEmpty()) {
                     Text(
-                        "Der Beitrag ist leer. Füge unten Text oder Fotos hinzu.",
+                        stringResource(R.string.edit_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -164,19 +166,19 @@ fun EditPostScreen(
                     )
                 }
 
-                SectionLabel("Hinzufügen")
+                SectionLabel(stringResource(R.string.common_add))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { onAddText(false) }, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Default.Add, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Text")
+                        Icon(Icons.Default.Add, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(stringResource(R.string.common_text))
                     }
                     OutlinedButton(onClick = { onAddText(true) }, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Default.Add, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Titel")
+                        Icon(Icons.Default.Add, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(stringResource(R.string.edit_add_heading))
                     }
                     OutlinedButton(
                         onClick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) },
                         modifier = Modifier.weight(1f),
                     ) {
-                        Icon(Icons.Default.Add, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Medien")
+                        Icon(Icons.Default.Add, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(stringResource(R.string.edit_add_media))
                     }
                 }
                 Spacer(Modifier.height(24.dp))
@@ -195,9 +197,9 @@ fun EditPostScreen(
                 TextButton(onClick = {
                     pickDate = false
                     pickTimeFor = dateState.selectedDateMillis?.let { LocalDate.ofEpochDay(it / DAY_MS) } ?: initial
-                }) { Text("Weiter") }
+                }) { Text(stringResource(R.string.edit_next)) }
             },
-            dismissButton = { TextButton(onClick = { pickDate = false }) { Text("Abbrechen") } },
+            dismissButton = { TextButton(onClick = { pickDate = false }) { Text(stringResource(R.string.common_cancel)) } },
         ) { DatePicker(state = dateState) }
     }
 
@@ -206,27 +208,27 @@ fun EditPostScreen(
         val timeState = rememberTimePickerState(current.hour, current.minute, is24Hour = true)
         AlertDialog(
             onDismissRequest = { pickTimeFor = null },
-            title = { Text("Uhrzeit") },
+            title = { Text(stringResource(R.string.edit_time)) },
             text = { TimePicker(state = timeState) },
             confirmButton = {
                 TextButton(onClick = {
                     pickTimeFor = null
                     onDate(LocalDateTime.of(day, LocalTime.of(timeState.hour, timeState.minute)))
-                }) { Text("Übernehmen") }
+                }) { Text(stringResource(R.string.edit_apply)) }
             },
-            dismissButton = { TextButton(onClick = { pickTimeFor = null }) { Text("Abbrechen") } },
+            dismissButton = { TextButton(onClick = { pickTimeFor = null }) { Text(stringResource(R.string.common_cancel)) } },
         )
     }
 
     if (confirmLeave) {
         AlertDialog(
             onDismissRequest = { confirmLeave = false },
-            title = { Text("Änderungen verwerfen?") },
-            text = { Text("Deine Änderungen an diesem Beitrag wurden noch nicht gespeichert.") },
+            title = { Text(stringResource(R.string.edit_discard_title)) },
+            text = { Text(stringResource(R.string.edit_discard_text)) },
             confirmButton = {
-                TextButton(onClick = { confirmLeave = false; onLeave() }) { Text("Verwerfen") }
+                TextButton(onClick = { confirmLeave = false; onLeave() }) { Text(stringResource(R.string.common_discard)) }
             },
-            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text("Weiter bearbeiten") } },
+            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.edit_keep_editing)) } },
         )
     }
 
@@ -234,16 +236,16 @@ fun EditPostScreen(
         AlertDialog(
             onDismissRequest = {},
             confirmButton = {},
-            title = { Text("Wird gespeichert …") },
+            title = { Text(stringResource(R.string.edit_saving)) },
             text = { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() } },
         )
     }
     state.saveError?.let { message ->
         AlertDialog(
             onDismissRequest = onDismissError,
-            title = { Text("Speichern fehlgeschlagen") },
+            title = { Text(stringResource(R.string.edit_save_failed)) },
             text = { Text(message) },
-            confirmButton = { TextButton(onClick = onDismissError) { Text("OK") } },
+            confirmButton = { TextButton(onClick = onDismissError) { Text(stringResource(R.string.common_ok)) } },
         )
     }
 }
@@ -261,15 +263,15 @@ private fun DateCard(state: EditState, onClick: () -> Unit) {
             Icon(Icons.Default.DateRange, null, tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text("Veröffentlichungsdatum", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.edit_publish_date), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(Format.dateTime(state.date).ifBlank { "–" }, style = MaterialTheme.typography.bodyLarge)
             }
-            Text("Ändern", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.edit_change), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         }
         val future = state.date?.isAfter(LocalDateTime.now()) == true
         val hint = when {
-            future -> "Das Datum liegt in der Zukunft: Der Beitrag wird geplant und erst dann sichtbar."
-            state.date != state.originalDate -> "Das Datum bestimmt die Reihenfolge der Beiträge."
+            future -> stringResource(R.string.edit_date_future)
+            state.date != state.originalDate -> stringResource(R.string.edit_date_order)
             else -> null
         }
         if (hint != null) {
@@ -305,7 +307,7 @@ private fun BlockCard(
                     OutlinedTextField(
                         value = block.text,
                         onValueChange = { onText(block.key, it) },
-                        label = { Text(if (block.heading != null) "Zwischenüberschrift" else "Text") },
+                        label = { Text(if (block.heading != null) stringResource(R.string.edit_subheading) else stringResource(R.string.common_text)) },
                         textStyle = if (block.heading != null) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
                         minLines = if (block.heading != null) 1 else 2,
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
@@ -314,9 +316,9 @@ private fun BlockCard(
                     if (block.hasFormatting) {
                         Text(
                             if (block.text == block.originalText) {
-                                "Enthält Formatierungen (z. B. Links). Sie bleiben erhalten, solange du den Text nicht änderst."
+                                stringResource(R.string.edit_formatting_kept)
                             } else {
-                                "Geändert – Formatierungen wie Links werden beim Speichern entfernt."
+                                stringResource(R.string.edit_formatting_lost)
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -327,7 +329,7 @@ private fun BlockCard(
                 Column {
                     MoveButtons(!isFirst, !isLast) { onMove(block.key, it) }
                     IconButton(onClick = { onRemove(block.key) }, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.Close, "Entfernen")
+                        Icon(Icons.Default.Close, stringResource(R.string.common_remove))
                     }
                 }
             }
@@ -343,9 +345,9 @@ private fun BlockCard(
                 onRemove = { onRemove(block.key) },
                 onRetry = { onRetry(block.key) },
                 subtitle = when {
-                    block.mediaId != null && block.mediaId == featuredId -> "Beitragsbild"
-                    block.originalRaw != null -> "Im Beitrag"
-                    else -> "Hochgeladen"
+                    block.mediaId != null && block.mediaId == featuredId -> stringResource(R.string.common_featured_image)
+                    block.originalRaw != null -> stringResource(R.string.edit_in_post)
+                    else -> stringResource(R.string.media_uploaded)
                 },
                 extraAction = if (!block.isVideo && block.mediaId != null) {
                     @Composable {
@@ -353,7 +355,7 @@ private fun BlockCard(
                         IconButton(onClick = { block.mediaId?.let(onFeatured) }) {
                             Icon(
                                 if (isFeatured) Icons.Filled.Star else Icons.Outlined.Star,
-                                contentDescription = if (isFeatured) "Beitragsbild" else "Als Beitragsbild verwenden",
+                                contentDescription = if (isFeatured) stringResource(R.string.common_featured_image) else stringResource(R.string.edit_set_featured),
                                 tint = if (isFeatured) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline,
                             )
                         }
@@ -382,14 +384,14 @@ private fun BlockCard(
                         )
                     }
                     Text(
-                        "Wird unverändert übernommen.",
+                        stringResource(R.string.edit_kept_unchanged),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.outline,
                         modifier = Modifier.padding(top = 4.dp),
                     )
                 }
                 MoveButtons(!isFirst, !isLast) { onMove(block.key, it) }
-                IconButton(onClick = { onRemove(block.key) }) { Icon(Icons.Default.Close, "Entfernen") }
+                IconButton(onClick = { onRemove(block.key) }) { Icon(Icons.Default.Close, stringResource(R.string.common_remove)) }
             }
         }
     }
@@ -406,9 +408,9 @@ private fun SaveBar(state: EditState, onSave: () -> Unit) {
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             val hint = when {
-                state.pendingUploads > 0 -> "Noch ${state.pendingUploads} Upload(s) laufen …"
-                state.failedUploads > 0 -> "Bitte fehlgeschlagene Uploads wiederholen oder entfernen."
-                state.title.isBlank() -> "Bitte eine Überschrift eingeben."
+                state.pendingUploads > 0 -> stringResource(R.string.common_hint_pending, state.pendingUploads)
+                state.failedUploads > 0 -> stringResource(R.string.common_hint_failed)
+                state.title.isBlank() -> stringResource(R.string.common_hint_title)
                 else -> null
             }
             if (hint != null) {
@@ -426,7 +428,7 @@ private fun SaveBar(state: EditState, onSave: () -> Unit) {
             ) {
                 Icon(Icons.Default.Check, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(10.dp))
-                Text("Speichern", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.common_save), fontWeight = FontWeight.SemiBold)
             }
         }
     }

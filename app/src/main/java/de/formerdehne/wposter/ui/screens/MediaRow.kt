@@ -33,9 +33,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import de.formerdehne.wposter.R
 import de.formerdehne.wposter.ui.ItemState
 
 /** Eine Zeile für ein Foto/Video mit Vorschau, Upload-Status und Verschieben/Entfernen. */
@@ -79,15 +81,15 @@ fun MediaRow(
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(if (isVideo) "Video" else "Foto", style = MaterialTheme.typography.titleSmall)
+            Text(if (isVideo) stringResource(R.string.media_video) else stringResource(R.string.media_photo), style = MaterialTheme.typography.titleSmall)
             when (state) {
-                ItemState.WAITING -> StatusText("Wartet …")
+                ItemState.WAITING -> StatusText(stringResource(R.string.media_waiting))
                 ItemState.PREPARING -> {
-                    StatusText(if (isVideo) "Wird bereinigt …" else "Wird verkleinert …")
+                    StatusText(if (isVideo) stringResource(R.string.media_cleaning) else stringResource(R.string.media_resizing))
                     LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 6.dp))
                 }
                 ItemState.UPLOADING -> {
-                    StatusText("Lädt hoch … ${(progress * 100).toInt()} %")
+                    StatusText(stringResource(R.string.media_uploading, (progress * 100).toInt()))
                     LinearProgressIndicator(
                         progress = { progress },
                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
@@ -96,14 +98,14 @@ fun MediaRow(
                 ItemState.DONE -> Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
-                    StatusText(subtitle ?: "Hochgeladen")
+                    StatusText(subtitle ?: stringResource(R.string.media_uploaded))
                 }
                 ItemState.FAILED -> {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            error ?: "Fehler",
+                            error ?: stringResource(R.string.media_error),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                             maxLines = 4,
@@ -113,14 +115,14 @@ fun MediaRow(
                     TextButton(onClick = onRetry, contentPadding = PaddingValues(0.dp)) {
                         Icon(Icons.Default.Refresh, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Erneut versuchen")
+                        Text(stringResource(R.string.common_retry))
                     }
                 }
             }
         }
         extraAction?.invoke()
         MoveButtons(canMoveUp, canMoveDown, onMove)
-        IconButton(onClick = onRemove) { Icon(Icons.Default.Close, "Entfernen") }
+        IconButton(onClick = onRemove) { Icon(Icons.Default.Close, stringResource(R.string.common_remove)) }
     }
 }
 
@@ -128,10 +130,10 @@ fun MediaRow(
 fun MoveButtons(canMoveUp: Boolean, canMoveDown: Boolean, onMove: (Int) -> Unit) {
     Column {
         IconButton(onClick = { onMove(-1) }, enabled = canMoveUp, modifier = Modifier.size(36.dp)) {
-            Icon(Icons.Default.KeyboardArrowUp, "Nach oben")
+            Icon(Icons.Default.KeyboardArrowUp, stringResource(R.string.media_move_up))
         }
         IconButton(onClick = { onMove(1) }, enabled = canMoveDown, modifier = Modifier.size(36.dp)) {
-            Icon(Icons.Default.KeyboardArrowDown, "Nach unten")
+            Icon(Icons.Default.KeyboardArrowDown, stringResource(R.string.media_move_down))
         }
     }
 }

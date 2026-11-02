@@ -10,7 +10,22 @@ sealed interface ParsedBlock {
     data class Heading(override val raw: String, val text: String, val level: Int, val hasFormatting: Boolean) : ParsedBlock
     data class Image(override val raw: String, val id: Long, val src: String?) : ParsedBlock
     data class Video(override val raw: String, val id: Long, val src: String?) : ParsedBlock
-    data class Other(override val raw: String, val label: String, val summary: String) : ParsedBlock
+    /**
+     * Nicht bearbeitbarer Block. [blockName] ist der Blockname ohne "core/"-Präfix
+     * (z. B. "gallery", "list") bzw. [FREEFORM] für klassischen Inhalt; [imageCount]
+     * nur bei Galerien, [summary] ist ein Textauszug (leer bei Galerien).
+     * Die Beschriftung für die Oberfläche entsteht erst in der UI (übersetzt).
+     */
+    data class Other(
+        override val raw: String,
+        val blockName: String,
+        val imageCount: Int,
+        val summary: String,
+    ) : ParsedBlock {
+        companion object {
+            const val FREEFORM = "freeform"
+        }
+    }
 }
 
 /**
@@ -76,7 +91,7 @@ object BlockParser {
 
     private fun freeform(text: String): ParsedBlock? {
         if (text.isBlank()) return null
-        return ParsedBlock.Other(text.trim(), "Klassischer Inhalt", excerpt(text))
+        return ParsedBlock.Other(text.trim(), ParsedBlock.Other.FREEFORM, 0, excerpt(text))
     }
 
     private fun classify(name: String, attrsText: String, raw: String, inner: String): ParsedBlock {
@@ -107,26 +122,10 @@ object BlockParser {
             )
             "gallery" -> {
                 val count = imgSrc.findAll(inner).count()
-                ParsedBlock.Other(raw, "Galerie", if (count == 1) "1 Bild" else "$count Bilder")
+                ParsedBlock.Other(raw, name, count, "")
             }
-            else -> ParsedBlock.Other(raw, label(name), excerpt(inner))
+            else -> ParsedBlock.Other(raw, name, 0, excerpt(inner))
         }
-    }
-
-    private fun label(name: String) = when (name) {
-        "list" -> "Liste"
-        "quote" -> "Zitat"
-        "embed" -> "Eingebetteter Inhalt"
-        "columns" -> "Spalten"
-        "group" -> "Gruppe"
-        "cover" -> "Titelbild"
-        "separator" -> "Trennlinie"
-        "spacer" -> "Abstand"
-        "audio" -> "Audio"
-        "file" -> "Datei"
-        "media-text" -> "Medien und Text"
-        "html" -> "HTML"
-        else -> "Block „$name“"
     }
 
     private fun excerpt(html: String): String {

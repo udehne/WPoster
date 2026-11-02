@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import de.formerdehne.wposter.R
 import de.formerdehne.wposter.WPosterApp
 import de.formerdehne.wposter.data.BlockBuilder
 import de.formerdehne.wposter.data.BlockParser
@@ -11,6 +12,7 @@ import de.formerdehne.wposter.data.MediaUploader
 import de.formerdehne.wposter.data.ParsedBlock
 import de.formerdehne.wposter.data.UploadedMedia
 import de.formerdehne.wposter.data.WpClient
+import de.formerdehne.wposter.i18n.str
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -123,7 +125,7 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _state.value = EditState(postId = id, loadError = e.message ?: "Unbekannter Fehler")
+                _state.value = EditState(postId = id, loadError = e.message ?: str(R.string.common_unknown_error))
             }
         }
     }
@@ -139,7 +141,32 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
             nextKey++, isVideo = true, remoteUrl = src, originalRaw = raw,
             uploaded = UploadedMedia(id, src.orEmpty(), null, isImage = false, isVideo = true),
         )
-        is ParsedBlock.Other -> EditBlock.Other(nextKey++, label, summary, raw)
+        is ParsedBlock.Other -> EditBlock.Other(
+            nextKey++,
+            otherLabel(blockName),
+            if (blockName == "gallery") {
+                if (imageCount == 1) str(R.string.edit_gallery_one_image) else str(R.string.edit_gallery_images, imageCount)
+            } else summary,
+            raw,
+        )
+    }
+
+    private fun otherLabel(name: String): String = when (name) {
+        ParsedBlock.Other.FREEFORM -> str(R.string.edit_block_classic)
+        "gallery" -> str(R.string.edit_block_gallery)
+        "list" -> str(R.string.edit_block_list)
+        "quote" -> str(R.string.edit_block_quote)
+        "embed" -> str(R.string.edit_block_embed)
+        "columns" -> str(R.string.edit_block_columns)
+        "group" -> str(R.string.edit_block_group)
+        "cover" -> str(R.string.edit_block_cover)
+        "separator" -> str(R.string.edit_block_separator)
+        "spacer" -> str(R.string.edit_block_spacer)
+        "audio" -> str(R.string.edit_block_audio)
+        "file" -> str(R.string.edit_block_file)
+        "media-text" -> str(R.string.edit_block_media_text)
+        "html" -> str(R.string.edit_block_html)
+        else -> str(R.string.edit_block_generic, name)
     }
 
     // ---------- Bearbeiten ----------
@@ -273,7 +300,7 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _state.update { it.copy(saving = false, saveError = e.message ?: "Unbekannter Fehler") }
+                _state.update { it.copy(saving = false, saveError = e.message ?: str(R.string.common_unknown_error)) }
             }
         }
     }

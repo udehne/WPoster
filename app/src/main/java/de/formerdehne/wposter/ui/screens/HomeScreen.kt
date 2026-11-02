@@ -63,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -70,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.LaunchedEffect
 import coil.compose.AsyncImage
 import de.formerdehne.wposter.BuildConfig
+import de.formerdehne.wposter.R
 import de.formerdehne.wposter.data.AppSettings
 import de.formerdehne.wposter.data.UpdateChecker
 import de.formerdehne.wposter.data.PostSummary
@@ -127,14 +129,14 @@ fun HomeScreen(
                 HorizontalDivider(Modifier.padding(horizontal = 24.dp))
                 Spacer(Modifier.height(8.dp))
                 if (configured) {
-                    DrawerEntry("Suche", Icons.Default.Search) { closeAnd(onSearch) }
-                    DrawerEntry("Kalender", Icons.Default.DateRange) { closeAnd(onCalendar) }
+                    DrawerEntry(stringResource(R.string.drawer_search), Icons.Default.Search) { closeAnd(onSearch) }
+                    DrawerEntry(stringResource(R.string.calendar_title), Icons.Default.DateRange) { closeAnd(onCalendar) }
                     HorizontalDivider(Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
                 }
-                DrawerEntry("Hilfe", Icons.Default.Info) { closeAnd { onDoc(InfoDoc.HILFE) } }
-                DrawerEntry("Einstellungen", Icons.Default.Settings) { closeAnd(onSettings) }
-                DrawerEntry("Impressum", Icons.Default.AccountBox) { closeAnd { onDoc(InfoDoc.IMPRESSUM) } }
-                DrawerEntry("Datenschutz", Icons.Default.Lock) { closeAnd { onDoc(InfoDoc.DATENSCHUTZ) } }
+                DrawerEntry(stringResource(R.string.common_help), Icons.Default.Info) { closeAnd { onDoc(InfoDoc.HILFE) } }
+                DrawerEntry(stringResource(R.string.settings_title), Icons.Default.Settings) { closeAnd(onSettings) }
+                DrawerEntry(stringResource(R.string.legal_title_notice), Icons.Default.AccountBox) { closeAnd { onDoc(InfoDoc.IMPRESSUM) } }
+                DrawerEntry(stringResource(R.string.drawer_privacy), Icons.Default.Lock) { closeAnd { onDoc(InfoDoc.DATENSCHUTZ) } }
                 Spacer(Modifier.weight(1f))
                 Text(
                     "WPoster ${BuildConfig.VERSION_NAME}",
@@ -171,7 +173,7 @@ fun HomeScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, "Menü")
+                            Icon(Icons.Default.Menu, stringResource(R.string.home_menu))
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -188,7 +190,7 @@ fun HomeScreen(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
                     ) {
-                        Icon(Icons.Default.Add, "Neuer Beitrag", Modifier.size(40.dp))
+                        Icon(Icons.Default.Add, stringResource(R.string.common_new_post), Modifier.size(40.dp))
                     }
                 }
             },
@@ -220,12 +222,12 @@ fun HomeScreen(
     if (confirmDiscard) {
         AlertDialog(
             onDismissRequest = { confirmDiscard = false },
-            title = { Text("Entwurf verwerfen?") },
-            text = { Text("Bereits hochgeladene Fotos und Videos dieses Entwurfs werden wieder von der Seite gelöscht.") },
+            title = { Text(stringResource(R.string.home_discard_draft_title)) },
+            text = { Text(stringResource(R.string.home_discard_draft_text)) },
             confirmButton = {
-                TextButton(onClick = { confirmDiscard = false; onDiscardDraft() }) { Text("Verwerfen") }
+                TextButton(onClick = { confirmDiscard = false; onDiscardDraft() }) { Text(stringResource(R.string.common_discard)) }
             },
-            dismissButton = { OutlinedButton(onClick = { confirmDiscard = false }) { Text("Abbrechen") } },
+            dismissButton = { OutlinedButton(onClick = { confirmDiscard = false }) { Text(stringResource(R.string.common_cancel)) } },
         )
     }
 }
@@ -285,16 +287,16 @@ private fun PostList(
                     }
                 }
                 home.posts.isEmpty() && home.error != null -> item(key = "error") {
-                    MessageBlock("Beiträge konnten nicht geladen werden", home.error, "Erneut versuchen", onRefresh)
+                    MessageBlock(stringResource(R.string.home_load_failed), home.error, stringResource(R.string.common_retry), onRefresh)
                 }
                 home.posts.isEmpty() -> item(key = "empty") {
-                    MessageBlock("Noch keine Beiträge", "Tippe auf + und veröffentliche deinen ersten Beitrag.", null, null)
+                    MessageBlock(stringResource(R.string.home_empty_title), stringResource(R.string.home_empty_text), null, null)
                 }
                 else -> {
                     items(home.posts, key = { it.id }) { post -> PostCard(post) { onOpenPost(post.id) } }
                     item(key = "footer") {
                         when {
-                            home.error != null -> MessageBlock(null, home.error, "Erneut versuchen", onLoadMore)
+                            home.error != null -> MessageBlock(null, home.error, stringResource(R.string.common_retry), onLoadMore)
                             !home.endReached -> {
                                 LaunchedEffect(home.posts.size) { onLoadMore() }
                                 Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
@@ -317,19 +319,19 @@ private fun UpdateCard(version: String, onDownload: () -> Unit, onDismiss: () ->
     ) {
         Column(Modifier.padding(start = 18.dp, end = 8.dp, top = 14.dp, bottom = 6.dp)) {
             Text(
-                "Neue Version $version verfügbar",
+                stringResource(R.string.home_update_title, version),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Herunterladen und über die bestehende App installieren – deine Einstellungen bleiben erhalten.",
+                stringResource(R.string.home_update_text),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onDismiss) { Text("Später") }
-                TextButton(onClick = onDownload) { Text("Herunterladen", fontWeight = FontWeight.SemiBold) }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.home_update_later)) }
+                TextButton(onClick = onDownload) { Text(stringResource(R.string.home_update_download), fontWeight = FontWeight.SemiBold) }
             }
         }
     }
@@ -345,20 +347,21 @@ private fun DraftCard(draft: DraftState, onContinue: () -> Unit, onDiscard: () -
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Edit, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 Spacer(Modifier.width(8.dp))
-                Text("Entwurf in Bearbeitung", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text(stringResource(R.string.home_draft_title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
             Spacer(Modifier.height(4.dp))
             Text(
-                draft.title.ifBlank { "Ohne Überschrift" } + " · " +
-                    if (draft.items.size == 1) "1 Medium" else "${draft.items.size} Medien",
+                draft.title.ifBlank { stringResource(R.string.home_draft_no_title) } + " · " +
+                    if (draft.items.size == 1) stringResource(R.string.home_draft_one_item)
+                    else stringResource(R.string.home_draft_items, draft.items.size),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onDiscard) { Text("Verwerfen") }
-                TextButton(onClick = onContinue) { Text("Fortsetzen", fontWeight = FontWeight.SemiBold) }
+                TextButton(onClick = onDiscard) { Text(stringResource(R.string.common_discard)) }
+                TextButton(onClick = onContinue) { Text(stringResource(R.string.home_draft_continue), fontWeight = FontWeight.SemiBold) }
             }
         }
     }
@@ -376,10 +379,10 @@ private fun Welcome(modifier: Modifier, onSettings: () -> Unit) {
         Spacer(Modifier.height(32.dp))
         BrandMark(88.dp)
         Spacer(Modifier.height(20.dp))
-        Text("Willkommen bei WPoster", style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+        Text(stringResource(R.string.home_welcome_title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Verbinde die App mit deinem WordPress-Blog, um Beiträge zu sehen, zu schreiben und zu bearbeiten.",
+            stringResource(R.string.home_welcome_text),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -388,7 +391,7 @@ private fun Welcome(modifier: Modifier, onSettings: () -> Unit) {
         Button(onClick = onSettings, modifier = Modifier.fillMaxWidth().height(56.dp)) {
             Icon(Icons.Default.Settings, null)
             Spacer(Modifier.size(10.dp))
-            Text("Jetzt einrichten")
+            Text(stringResource(R.string.home_setup_now))
         }
         Spacer(Modifier.height(32.dp))
         Card(
@@ -397,9 +400,9 @@ private fun Welcome(modifier: Modifier, onSettings: () -> Unit) {
         ) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.Share, null, tint = MaterialTheme.colorScheme.tertiary)
-                Text("Direkt aus der Galerie", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.home_share_title), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Fotos und Videos in der Galerie auswählen, auf „Teilen“ tippen und WPoster wählen.",
+                    stringResource(R.string.home_share_text),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

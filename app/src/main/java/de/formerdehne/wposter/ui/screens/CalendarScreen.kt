@@ -33,19 +33,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import de.formerdehne.wposter.R
 import de.formerdehne.wposter.ui.CalendarState
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.time.temporal.WeekFields
 import java.util.Locale
 
-private val MONTH = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.GERMAN)
-private val DAY = DateTimeFormatter.ofPattern("EEEE, d. MMMM", Locale.GERMAN)
-private val MONTH_ONLY = DateTimeFormatter.ofPattern("MMMM", Locale.GERMAN)
-private val WEEKDAYS = listOf("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
+// Locale bei jedem Aufruf neu lesen, damit ein Sprachwechsel sofort greift.
+private fun monthFormat() = DateTimeFormatter.ofPattern("LLLL yyyy", Locale.getDefault())
+private fun monthOnlyFormat() = DateTimeFormatter.ofPattern("LLLL", Locale.getDefault())
+private fun firstDayOfWeek(): DayOfWeek = WeekFields.of(Locale.getDefault()).firstDayOfWeek
+
+/** Kurze Wochentagsnamen ab dem ersten Tag der Woche (z. B. „Mo“ … „So“ bzw. „Sun“ … „Sat“). */
+private fun weekdayLabels(): List<String> {
+    val locale = Locale.getDefault()
+    val first = firstDayOfWeek()
+    return (0 until 7).map { first.plus(it.toLong()).getDisplayName(TextStyle.SHORT, locale).removeSuffix(".") }
+}
 
 @Composable
 fun CalendarScreen(
@@ -58,7 +70,7 @@ fun CalendarScreen(
     onRetry: () -> Unit,
     onOpenPost: (Long) -> Unit,
 ) {
-    Scaffold(topBar = { AppTopBar("Kalender", onBack = onBack) }) { padding ->
+    Scaffold(topBar = { AppTopBar(stringResource(R.string.calendar_title), onBack = onBack) }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp),
@@ -74,23 +86,25 @@ fun CalendarScreen(
                     }
                 }
                 state.error != null -> item(key = "error") {
-                    MessageBlock("Beiträge konnten nicht geladen werden", state.error, "Erneut versuchen", onRetry)
+                    MessageBlock(stringResource(R.string.home_load_failed), state.error, stringResource(R.string.common_retry), onRetry)
                 }
                 state.posts.isEmpty() -> item(key = "empty") {
-                    MessageBlock(null, "Im ${state.month.format(MONTH)} gibt es keine Beiträge.", null, null)
+                    MessageBlock(null, stringResource(R.string.calendar_no_posts_in, state.month.format(monthFormat())), null, null)
                 }
                 else -> {
                     item(key = "heading") {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             val count = state.visiblePosts.size
+                            val dayFormat = DateTimeFormatter.ofPattern(stringResource(R.string.calendar_day_pattern), Locale.getDefault())
                             Text(
-                                (state.selectedDay?.format(DAY) ?: state.month.format(MONTH_ONLY)) +
-                                    " · " + if (count == 1) "1 Beitrag" else "$count Beiträge",
+                                (state.selectedDay?.format(dayFormat) ?: state.month.format(monthOnlyFormat())) +
+                                    " · " + if (count == 1) stringResource(R.string.calendar_one_post)
+                                    else stringResource(R.string.calendar_posts, count),
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.weight(1f),
                             )
                             if (state.selectedDay != null) {
-                                TextButton(onClick = { onSelect(null) }) { Text("Ganzer Monat") }
+                                TextButton(onClick = { onSelect(null) }) { Text(stringResource(R.string.calendar_whole_month)) }
                             }
                         }
                     }
@@ -120,26 +134,26 @@ private fun MonthCard(
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onPrevious) {
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Vorheriger Monat")
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, stringResource(R.string.calendar_previous_month))
                 }
                 Text(
-                    state.month.format(MONTH),
+                    state.month.format(monthFormat()),
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(onClick = onNext) {
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Nächster Monat")
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.calendar_next_month))
                 }
             }
             if (state.month != YearMonth.now()) {
                 TextButton(onClick = onToday, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                    Text("Zum aktuellen Monat")
+                    Text(stringResource(R.string.calendar_current_month))
                 }
             }
             Spacer(Modifier.height(4.dp))
             Row {
-                WEEKDAYS.forEach {
+                weekdayLabels().forEach {
                     Text(
                         it,
                         style = MaterialTheme.typography.labelMedium,
@@ -150,9 +164,9 @@ private fun MonthCard(
                 }
             }
             Spacer(Modifier.height(4.dp))
-            // Raster: Montag = erste Spalte.
+            // Raster: erste Spalte = erster Tag der Woche laut Sprache/Region.
             val first = state.month.atDay(1)
-            val offset = first.dayOfWeek.value - 1
+            val offset = (first.dayOfWeek.value - firstDayOfWeek().value + 7) % 7
             val days = state.month.lengthOfMonth()
             val rows = (offset + days + 6) / 7
             for (row in 0 until rows) {

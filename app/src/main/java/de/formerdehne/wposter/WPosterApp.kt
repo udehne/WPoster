@@ -51,6 +51,7 @@ class WPosterApp : Application(), ImageLoaderFactory, ViewModelStoreOwner {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         settings = SettingsRepository(this)
         // Reste abgebrochener Uploads aus früheren Sitzungen entfernen.
         MediaPreparer.clearWorkDir(this)
@@ -61,4 +62,10 @@ class WPosterApp : Application(), ImageLoaderFactory, ViewModelStoreOwner {
             .components { add(VideoFrameDecoder.Factory()) }
             .crossfade(true)
             .build()
+
+    companion object {
+        /** Für Texte aus Ressourcen außerhalb von Composables (siehe i18n/Strings.kt). */
+        lateinit var instance: WPosterApp
+            private set
+    }
 }
