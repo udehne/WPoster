@@ -39,7 +39,12 @@ Adresse und Zugangsdaten gibst du nach der Installation in der App ein.
   und das **Veröffentlichungsdatum** ändern (bestimmt die Reihenfolge).
 - **Suche:** Überschriften und Texte aller Beiträge durchsuchen, die Treffer erscheinen als Liste.
 - **Kalender:** Monatsansicht, in der Tage mit Beiträgen markiert und antippbar sind.
-- **Menü ☰:** Suche, Kalender, Hilfe, Einstellungen, Impressum, Datenschutz.
+- **Mehrere Blogs:** einrichten, wechseln, Start-Blog festlegen. Beim Teilen wählst du den Blog.
+- **Kategorien & Schlagwörter** aus der Liste wählen oder neu anlegen.
+- **Entwürfe:** „Sofort veröffentlichen“ ist voreingestellt, ausgeschaltet wird als Entwurf gespeichert.
+- **Bildunterschrift & Credit** je Foto/Video (optional).
+- **Ohne Internet:** Uploads warten und laufen automatisch weiter.
+- **Menü ☰:** Blogs, Suche, Kalender, Hilfe, Einstellungen, Impressum, Datenschutz.
 - **Teilen aus der Galerie:** Fotos/Videos in Google Fotos, der Samsung-Galerie o. Ä.
   auswählen, dann **Teilen → WPoster**. Der Upload startet sofort, und du tippst
   währenddessen Überschrift und Texte ein.
@@ -108,36 +113,31 @@ dass der Signierschlüssel hinterlegt ist, siehe [Abschnitt 9](#9-für-entwickle
 
 ## 4. App einrichten
 
-Beim ersten Start öffnen sich automatisch die **Einstellungen**. Neben jedem Feld
-findest du ein **ⓘ**. Ein Tipp darauf erklärt, was dort hingehört und wo du es findest.
+Beim ersten Start begrüßt dich WPoster und zeigt, was die App kann. Mit
+**„Blog verbinden“** startet die Einrichtung in drei Schritten:
 
-### Schritt 1: Anwendungspasswort in WordPress erstellen
+1. **Adresse:** z. B. `https://udehne.de`. Die App prüft, ob dort ein WordPress-Blog erreichbar ist.
+2. **Zugriff erlauben:** **„Im Browser anmelden & Zugriff erlauben“** öffnet deinen Blog im
+   Browser. Du meldest dich an und bestätigst den Zugriff für „WPoster“. WordPress legt dabei
+   automatisch ein eigenes **Anwendungspasswort** an und gibt es an die App zurück.
+   Dein normales Passwort sieht die App nie.
+   Alternativ: **„Anwendungspasswort selbst anlegen“** öffnet direkt dein WordPress-Profil
+   (Abschnitt „Anwendungspasswörter“). Dort ein Passwort erzeugen und im 3. Schritt einfügen.
+3. **Zugangsdaten prüfen:** Benutzername und Anwendungspasswort sind meist schon eingetragen.
+   Ein Tipp auf „Verbindung prüfen“, und es erscheint der Glückwunsch.
 
-Das Anwendungspasswort ist **nicht** dein normales WordPress-Passwort. Es ist ein
-eigenes Passwort nur für diese App und lässt sich jederzeit widerrufen.
+Neben den Feldern findest du jeweils ein **ⓘ** mit Hilfe.
 
-1. Im Browser (gern am Computer) bei WordPress anmelden: `https://deine-seite.de/wp-admin`
-2. Links im Menü **Benutzer → Profil**.
-3. Ganz nach unten scrollen bis **„Anwendungspasswörter“**.
-4. Bei **„Name des neuen Anwendungspassworts“** z. B. `WPoster Handy Uli` eingeben.
-5. **„Neues Anwendungspasswort hinzufügen“** klicken.
-6. Das angezeigte Passwort (24 Zeichen, z. B. `abcd EFGH 1234 ijkl MNOP 5678`) kopieren.
-   **Es wird nur dieses eine Mal angezeigt.** Du kannst es dir z. B. per Mail selbst
-   schicken oder direkt am Handy erzeugen.
+### Mehrere Blogs
 
-> Fehlt der Abschnitt „Anwendungspasswörter“, ist die Funktion auf deiner Seite
-> deaktiviert, meist durch ein Sicherheits-Plugin. Dort kann man sie wieder einschalten.
+- **Weiteren Blog einrichten:** ☰ → **Blog hinzufügen** (gleiche drei Schritte).
+- **Wechseln:** Sind mehrere Blogs eingerichtet, stehen sie oben im Menü ☰. Antippen zum Wechseln.
+- **Verwalten:** ☰ → **Einstellungen → Blogs**. Dort kannst du je Blog Zugangsdaten ändern,
+  das Upload-Limit setzen, **„Beim Start anzeigen“** wählen oder den Blog entfernen.
+- **Teilen aus der Galerie:** Bei mehreren Blogs fragt die App zuerst, in welchen Blog es geht.
 
-### Schritt 2: Daten in der App eintragen
-
-| Feld | Was eintragen | Wo finde ich das? |
-|---|---|---|
-| **Adresse** | z. B. `https://udehne.de` | Adresszeile im Browser, wenn du deinen Blog öffnest (ohne `/wp-admin`) |
-| **Benutzername** | dein Anmeldename | WordPress → Benutzer → Profil → „Benutzername“ (ganz oben, grau) |
-| **Anwendungspasswort** | das Passwort aus Schritt 1 | WordPress → Benutzer → Profil → Anwendungspasswörter |
-
-Dann **„Verbindung prüfen & speichern“** antippen. Bei Erfolg erscheint der Name
-deines Blogs und deines Benutzers, und die App ist bereit.
+Jede Person nutzt ihren **eigenen WordPress-Benutzer** (mindestens Rolle **Autor**). Für
+neue **Kategorien** und für das Bearbeiten fremder Beiträge braucht es die Rolle **Redakteur**.
 
 ## 5. Beitrag veröffentlichen
 

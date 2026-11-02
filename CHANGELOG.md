@@ -2,6 +2,24 @@
 
 Alle nennenswerten Änderungen an WPoster. / All notable changes to WPoster.
 
+## [1.5] – 2026-11-02
+
+### Neu / Added
+- **Mehrere Blogs:** einrichten, bearbeiten, entfernen, im Menü wechseln, Start-Blog festlegen;
+  Blog-Auswahl beim Teilen. Bestehende Zugangsdaten werden übernommen.
+  *Multiple blogs with switching, start blog and blog picker when sharing.*
+- **Startbild, Begrüßung und Einrichtung in 3 Schritten** – mit WordPress-Freigabe im Browser
+  (Anwendungspasswort wird automatisch übernommen) und Glückwunsch.
+  *Splash screen, welcome and 3-step onboarding with in-browser authorization.*
+- **Kategorien und Schlagwörter** beim Erstellen und Bearbeiten (Liste + neu anlegen).
+- **Entwürfe:** „Sofort veröffentlichen“ abschaltbar; Entwürfe in der Liste markiert.
+- **Bildunterschrift und Credit** je Foto/Video.
+- **Uploads ohne Internet** warten und laufen automatisch weiter.
+
+### Geändert / Changed
+- Hinzufügen-Knöpfe im Editor untereinander statt in einer Zeile.
+- Upload-Limit wird jetzt je Blog eingestellt.
+
 ## [1.4] – 2026-11-02
 
 ### Neu / Added

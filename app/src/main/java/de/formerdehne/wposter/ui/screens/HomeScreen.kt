@@ -104,7 +104,6 @@ fun HomeScreen(
     onSwitchBlog: (String) -> Unit,
     onAddBlog: () -> Unit,
     onContinueDraft: () -> Unit,
-    draftBlog: String?,
 ) {
     // Noch kein Blog: Begrüßung statt Beitragsliste.
     if (settings.accounts.isEmpty()) {
