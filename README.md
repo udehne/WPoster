@@ -7,6 +7,8 @@ Fotos oder Videos aus, gibst eine Überschrift und optional Texte ein, und mit e
 Tipp ist der Beitrag online. Die App funktioniert mit jeder WordPress-Seite.
 Adresse und Zugangsdaten gibst du nach der Installation in der App ein.
 
+**⬇️ Download:** [Neueste Version (APK)](https://github.com/udehne/WPoster/releases/latest) · Android 9 oder neuer · kostenlos & quelloffen (GPL-3.0)
+
 ---
 
 ## Inhalt
@@ -77,7 +79,7 @@ APK-Datei bereitgestellt.
 
 ### Variante A: Release (empfohlen, am einfachsten auf dem Handy)
 
-1. Auf dem Handy die GitHub-Seite des Projekts öffnen → **Releases**.
+1. Auf dem Handy **https://github.com/udehne/WPoster/releases/latest** öffnen.
 2. Beim neuesten Release die Datei **`WPoster-1.0.x.apk`** antippen und herunterladen.
 3. Die heruntergeladene Datei öffnen. Beim ersten Mal fragt Android, ob der Browser
    „Apps aus unbekannten Quellen installieren“ darf. Das einmal erlauben.
@@ -93,7 +95,13 @@ APK-Datei bereitgestellt.
 
 ### Updates
 
-Eine neue Version einfach genauso herunterladen und installieren. Sie ersetzt die
+Eine neue Version einfach genauso herunterladen und installieren.
+
+**Automatische Updates:** Mit der App [Obtainium](https://github.com/ImranR98/Obtainium)
+bekommst du neue Versionen automatisch. Dazu in Obtainium **App hinzufügen** antippen und
+`https://github.com/udehne/WPoster` eintragen.
+
+ Sie ersetzt die
 alte Version, und Zugangsdaten und Einstellungen bleiben erhalten. Voraussetzung ist,
 dass der Signierschlüssel hinterlegt ist, siehe [Abschnitt 9](#9-für-entwickler-bauen--signieren).
 
@@ -212,6 +220,7 @@ Gut zu wissen:
 | **„Beitrag ansehen“ zeigt die Anmeldeseite** | Wenn dein Blog nur für angemeldete Benutzer sichtbar ist: im Browser einmal anmelden, danach bleibt die Anmeldung meist erhalten. |
 | **„Du darfst diesen Beitrag nicht bearbeiten“** | Der Beitrag stammt von einer anderen Person. Dafür braucht dein Benutzer die Rolle **Redakteur** (WordPress → Benutzer → Rolle ändern). |
 | **Bilder in der Liste fehlen** | Manche Schutz-Plugins sperren auch Bilddateien für Apps. Im Plugin den Ordner `wp-content/uploads` freigeben. |
+| **Fehler gefunden oder Idee?** | Bitte als [Issue](https://github.com/udehne/WPoster/issues) melden. |
 | **Update lässt sich nicht installieren** („Konflikt mit vorhandenem Paket“) | Die Versionen wurden mit unterschiedlichen Schlüsseln signiert. App einmal deinstallieren und neu installieren, dann Zugangsdaten neu eingeben. Dauerhafte Lösung: [Abschnitt 9](#9-für-entwickler-bauen--signieren). |
 
 ### .htaccess-Anpassung (z. B. bei IONOS)
