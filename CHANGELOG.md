@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an WPoster. / All notable changes to WPoster.
 
-## [1.4] – unveröffentlicht / unreleased
+## [1.4] – 2026-11-02
 
 ### Neu / Added
 - **Uploads im Hintergrund:** Fotos und Videos laden weiter hoch, auch wenn die App

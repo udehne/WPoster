@@ -7,7 +7,7 @@ Fotos oder Videos aus, gibst eine Überschrift und optional Texte ein, und mit e
 Tipp ist der Beitrag online. Die App funktioniert mit jeder WordPress-Seite.
 Adresse und Zugangsdaten gibst du nach der Installation in der App ein.
 
-**⬇️ Download:** [Neueste Version (APK)](https://github.com/udehne/WPoster/releases/latest) · Android 9 oder neuer · kostenlos & quelloffen (GPL-3.0)
+**⬇️ Download:** [Neueste Version (APK)](https://github.com/udehne/WPoster/releases/latest) · Android 9 oder neuer · Deutsch & English · kostenlos & quelloffen (GPL-3.0)
 
 ---
 
@@ -64,6 +64,7 @@ Adresse und Zugangsdaten gibst du nach der Installation in der App ein.
 | Was | Details |
 |---|---|
 | Handy | Android 9 oder neuer |
+| Sprache | Deutsch oder Englisch, folgt der Systemsprache (ab Android 13 pro App einstellbar: Einstellungen → Apps → WPoster → Sprache) |
 | Blog | WordPress 5.6 oder neuer, erreichbar über **https://** |
 | WordPress-Benutzer | mindestens Rolle **Autor** (darf hochladen und veröffentlichen) |
 | Anwendungspasswort | wird in WordPress erzeugt, siehe [Abschnitt 4](#4-app-einrichten) |
