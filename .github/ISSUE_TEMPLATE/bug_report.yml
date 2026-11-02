@@ -1,0 +1,54 @@
+name: Fehler melden / Report a bug
+description: Etwas funktioniert nicht wie erwartet. / Something doesn't work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke fürs Melden! Bitte **keine** Zugangsdaten, Passwörter oder privaten Fotos anhängen.
+        Thanks for reporting! Please do **not** include credentials, passwords or private photos.
+  - type: textarea
+    id: what
+    attributes:
+      label: Was ist passiert? / What happened?
+      description: Fehlermeldung bitte wörtlich abschreiben. / Please quote the exact error message.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Schritte zum Nachstellen / Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Was hast du erwartet? / What did you expect?
+  - type: input
+    id: app-version
+    attributes:
+      label: WPoster-Version
+      description: Menü ☰ → unten / Menu ☰ → bottom
+      placeholder: "1.4"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Gerät & Android-Version / Device & Android version
+      placeholder: "Pixel 8, Android 16"
+    validations:
+      required: true
+  - type: input
+    id: wordpress
+    attributes:
+      label: WordPress-Version & Hoster / WordPress version & host
+      placeholder: "WordPress 7.1, IONOS"
+  - type: textarea
+    id: plugins
+    attributes:
+      label: Sicherheits-/Login-Plugins / Security or login plugins
+      description: z. B. Wordfence, „Login erforderlich“-Plugins … / e.g. Wordfence, "require login" plugins …

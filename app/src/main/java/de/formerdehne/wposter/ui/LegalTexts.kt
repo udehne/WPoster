@@ -144,7 +144,7 @@ object LegalTexts {
                     "die Sie selbst in der App eintragen. Wir als Anbieter betreiben keinen eigenen Server " +
                     "für die App und erhalten keine Ihrer Daten.",
                 "Die App enthält keine Werbung, kein Tracking, keine Analyse-Werkzeuge und keine " +
-                    "Absturzberichte an Dritte."
+                    "Absturzberichte an Dritte. Einzige Ausnahme ist die abschaltbare Update-Prüfung bei GitHub (Abschnitt 6)."
             )
         ),
         LegalSection(
@@ -186,21 +186,33 @@ object LegalTexts {
             )
         ),
         LegalSection(
-            "6. Berechtigungen",
+            "6. Update-Prüfung",
             listOf(
-                "Internetzugriff – um Medien und Beiträge an Ihre WordPress-Seite zu senden. " +
-                    "Weitere Berechtigungen benötigt die App nicht."
+                "Ist „Nach Updates suchen“ eingeschaltet (Standard), fragt die App höchstens alle sechs Stunden " +
+                    "bei GitHub (GitHub Inc., ein Unternehmen von Microsoft) nach der neuesten Version. Dabei werden " +
+                    "technisch notwendige Verbindungsdaten wie Ihre IP-Adresse an GitHub übertragen; weitere Daten " +
+                    "werden nicht gesendet. Es gilt die Datenschutzerklärung von GitHub. Sie können die Prüfung " +
+                    "jederzeit in den Einstellungen abschalten."
             )
         ),
         LegalSection(
-            "7. Abgebildete Personen",
+            "7. Berechtigungen",
+            listOf(
+                "Internetzugriff – um Medien und Beiträge an Ihre WordPress-Seite zu senden.",
+                "Benachrichtigungen – um den Fortschritt laufender Uploads anzuzeigen, auch wenn die App im " +
+                    "Hintergrund ist. Diese Berechtigung ist optional.",
+                "Weitere Berechtigungen benötigt die App nicht."
+            )
+        ),
+        LegalSection(
+            "8. Abgebildete Personen",
             listOf(
                 "Bitte veröffentlichen Sie Fotos und Videos anderer Personen nur mit deren Einverständnis. " +
                     "Bei Kindern ist das Einverständnis der Sorgeberechtigten erforderlich."
             )
         ),
         LegalSection(
-            "8. Ihre Rechte",
+            "9. Ihre Rechte",
             listOf(
                 "Sie haben nach der DSGVO das Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), " +
                     "Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit " +
@@ -210,6 +222,6 @@ object LegalTexts {
                     "Unabhängigen Landeszentrum für Datenschutz Schleswig-Holstein (ULD), Kiel."
             )
         ),
-        LegalSection("Stand", listOf("Oktober 2026")),
+        LegalSection("Stand", listOf("November 2026")),
     )
 }

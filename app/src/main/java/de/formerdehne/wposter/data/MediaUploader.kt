@@ -5,9 +5,13 @@ import android.net.Uri
 import kotlinx.coroutines.sync.Mutex
 
 /** Aufbereiten + Hochladen einer Mediendatei. Wird vom Erstellen- und vom Bearbeiten-Editor genutzt. */
-class MediaUploader(context: Context, private val settings: SettingsRepository) {
+class MediaUploader(private val context: Context, private val settings: SettingsRepository) {
 
     private val preparer = MediaPreparer(context)
+
+    suspend fun stage(uri: Uri): Uri = preparer.stage(uri)
+
+    fun releaseStaged(uri: Uri) = MediaPreparer.deleteStaged(context, uri)
 
     /** Nacheinander hochladen schont Akku und Webserver. */
     val lock = Mutex()

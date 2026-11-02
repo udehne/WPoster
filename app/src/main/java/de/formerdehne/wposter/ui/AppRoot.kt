@@ -5,7 +5,9 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import de.formerdehne.wposter.ui.screens.openInBrowser
 import de.formerdehne.wposter.data.SettingsRepository
 import de.formerdehne.wposter.ui.screens.CalendarScreen
 import de.formerdehne.wposter.ui.screens.ComposeScreen
@@ -36,6 +38,7 @@ fun AppRoot(
     val search by searchVm.state.collectAsStateWithLifecycle()
     val calendar by calendarVm.state.collectAsStateWithLifecycle()
     val screen = nav.current
+    val context = LocalContext.current
 
     // Nach erfolgreichem Veröffentlichen: Erfolgsseite, Liste aktualisieren.
     LaunchedEffect(draft.published) {
@@ -88,6 +91,8 @@ fun AppRoot(
                 onDoc = { nav.push(Screen.Doc(it)) },
                 onSearch = { nav.push(Screen.Search) },
                 onCalendar = { nav.push(Screen.Calendar) },
+                onOpenUrl = { openInBrowser(context, it) },
+                onDismissUpdate = homeVm::dismissUpdate,
             )
             Screen.Search -> SearchScreen(
                 state = search,

@@ -20,6 +20,12 @@ data class AppSettings(
     val displayName: String?,
     val maxImageEdge: Int,
     val maxUploadMb: Int,
+    val checkUpdates: Boolean,
+    /** Zuletzt bei GitHub gefundene Version (für den Update-Hinweis). */
+    val latestVersion: String?,
+    val latestUrl: String?,
+    val dismissedVersion: String?,
+    val lastUpdateCheck: Long,
 )
 
 class SettingsRepository(context: Context) {
@@ -42,6 +48,11 @@ class SettingsRepository(context: Context) {
             displayName = prefs.getString(KEY_DISPLAY_NAME, null),
             maxImageEdge = prefs.getInt(KEY_MAX_EDGE, DEFAULT_MAX_EDGE),
             maxUploadMb = prefs.getInt(KEY_MAX_UPLOAD, DEFAULT_MAX_UPLOAD_MB),
+            checkUpdates = prefs.getBoolean(KEY_CHECK_UPDATES, true),
+            latestVersion = prefs.getString(KEY_LATEST_VERSION, null),
+            latestUrl = prefs.getString(KEY_LATEST_URL, null),
+            dismissedVersion = prefs.getString(KEY_DISMISSED_VERSION, null),
+            lastUpdateCheck = prefs.getLong(KEY_LAST_CHECK, 0L),
         )
     }
 
@@ -85,6 +96,25 @@ class SettingsRepository(context: Context) {
         _state.value = load()
     }
 
+    fun setCheckUpdates(value: Boolean) {
+        prefs.edit().putBoolean(KEY_CHECK_UPDATES, value).apply()
+        _state.value = load()
+    }
+
+    fun saveUpdateCheck(version: String?, url: String?) {
+        prefs.edit()
+            .putString(KEY_LATEST_VERSION, version)
+            .putString(KEY_LATEST_URL, url)
+            .putLong(KEY_LAST_CHECK, System.currentTimeMillis())
+            .apply()
+        _state.value = load()
+    }
+
+    fun dismissUpdate(version: String) {
+        prefs.edit().putString(KEY_DISMISSED_VERSION, version).apply()
+        _state.value = load()
+    }
+
     companion object {
         const val DEFAULT_MAX_EDGE = 2560
         const val DEFAULT_MAX_UPLOAD_MB = 128
@@ -97,6 +127,11 @@ class SettingsRepository(context: Context) {
         private const val KEY_SITE_NAME = "site_name"
         private const val KEY_DISPLAY_NAME = "display_name"
         private const val KEY_SITE_DESCRIPTION = "site_description"
+        private const val KEY_CHECK_UPDATES = "check_updates"
+        private const val KEY_LATEST_VERSION = "latest_version"
+        private const val KEY_LATEST_URL = "latest_url"
+        private const val KEY_DISMISSED_VERSION = "dismissed_version"
+        private const val KEY_LAST_CHECK = "last_update_check"
         private const val KEY_MAX_EDGE = "max_image_edge"
         private const val KEY_MAX_UPLOAD = "max_upload_mb"
     }

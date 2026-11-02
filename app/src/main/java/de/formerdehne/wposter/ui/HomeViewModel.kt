@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import de.formerdehne.wposter.WPosterApp
 import de.formerdehne.wposter.data.PostSummary
+import de.formerdehne.wposter.data.UpdateChecker
 import de.formerdehne.wposter.data.WpClient
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -35,6 +36,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private var job: Job? = null
 
     init {
+        checkForUpdate()
         // Neu laden, sobald (andere) Zugangsdaten gespeichert werden.
         viewModelScope.launch {
             settings.state
@@ -100,6 +102,19 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun clearError() = _state.update { it.copy(error = null) }
+
+    /** Höchstens alle 6 Stunden bei GitHub nach einer neuen Version fragen. */
+    private fun checkForUpdate() {
+        val s = settings.state.value
+        if (!s.checkUpdates || !UpdateChecker.enabledForThisBuild) return
+        if (System.currentTimeMillis() - s.lastUpdateCheck < 6 * 60 * 60 * 1000L) return
+        viewModelScope.launch {
+            val update = runCatching { UpdateChecker.latest() }.getOrNull() ?: return@launch
+            settings.saveUpdateCheck(update.version, update.apkUrl ?: update.pageUrl)
+        }
+    }
+
+    fun dismissUpdate(version: String) = settings.dismissUpdate(version)
 
     companion object {
         const val PAGE_SIZE = 20

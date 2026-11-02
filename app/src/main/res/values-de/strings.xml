@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">Mit WPoster veröffentlichen</string>
+
+    <string name="channel_uploads">Laufende Uploads</string>
+    <string name="channel_upload_results">Upload-Ergebnisse</string>
+    <string name="upload_notification_title">Fotos &amp; Videos werden hochgeladen …</string>
+    <string name="upload_notification_text">Datei %1$d von %2$d</string>
+    <string name="upload_done_title">Uploads abgeschlossen</string>
+    <string name="upload_done_text">Tippe, um den Beitrag fertigzustellen und zu veröffentlichen.</string>
+    <string name="upload_failed_title">Upload fehlgeschlagen</string>
+    <string name="upload_failed_text">%1$d Datei(en) konnten nicht hochgeladen werden. Tippe zum Wiederholen.</string>
+</resources>

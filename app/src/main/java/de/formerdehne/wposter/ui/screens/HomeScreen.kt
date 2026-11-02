@@ -71,6 +71,7 @@ import androidx.compose.runtime.LaunchedEffect
 import coil.compose.AsyncImage
 import de.formerdehne.wposter.BuildConfig
 import de.formerdehne.wposter.data.AppSettings
+import de.formerdehne.wposter.data.UpdateChecker
 import de.formerdehne.wposter.data.PostSummary
 import de.formerdehne.wposter.ui.DraftState
 import de.formerdehne.wposter.ui.Format
@@ -93,6 +94,8 @@ fun HomeScreen(
     onDoc: (InfoDoc) -> Unit,
     onSearch: () -> Unit,
     onCalendar: () -> Unit,
+    onOpenUrl: (String) -> Unit,
+    onDismissUpdate: (String) -> Unit,
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -193,9 +196,16 @@ fun HomeScreen(
             if (!configured) {
                 Welcome(Modifier.padding(padding), onSettings)
             } else {
+                val update = settings.latestVersion?.takeIf {
+                    settings.checkUpdates && UpdateChecker.enabledForThisBuild &&
+                        it != settings.dismissedVersion && UpdateChecker.isNewer(it, BuildConfig.VERSION_NAME)
+                }
                 PostList(
                     home = home,
                     draft = draft,
+                    update = update?.let { it to (settings.latestUrl ?: UpdateChecker.REPO_URL + "/releases/latest") },
+                    onOpenUrl = onOpenUrl,
+                    onDismissUpdate = onDismissUpdate,
                     padding = padding,
                     onOpenPost = onOpenPost,
                     onRefresh = onRefresh,
@@ -236,6 +246,9 @@ private fun DrawerEntry(label: String, icon: ImageVector, onClick: () -> Unit) {
 private fun PostList(
     home: HomeState,
     draft: DraftState,
+    update: Pair<String, String>?,
+    onOpenUrl: (String) -> Unit,
+    onDismissUpdate: (String) -> Unit,
     padding: PaddingValues,
     onOpenPost: (Long) -> Unit,
     onRefresh: () -> Unit,
@@ -253,6 +266,15 @@ private fun PostList(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            if (update != null) {
+                item(key = "update") {
+                    UpdateCard(
+                        version = update.first,
+                        onDownload = { onOpenUrl(update.second) },
+                        onDismiss = { onDismissUpdate(update.first) },
+                    )
+                }
+            }
             if (draft.hasContent) {
                 item(key = "draft") { DraftCard(draft, onContinueDraft, onDiscardDraft) }
             }
@@ -282,6 +304,32 @@ private fun PostList(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpdateCard(version: String, onDownload: () -> Unit, onDismiss: () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(start = 18.dp, end = 8.dp, top = 14.dp, bottom = 6.dp)) {
+            Text(
+                "Neue Version $version verfügbar",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Herunterladen und über die bestehende App installieren – deine Einstellungen bleiben erhalten.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onDismiss) { Text("Später") }
+                TextButton(onClick = onDownload) { Text("Herunterladen", fontWeight = FontWeight.SemiBold) }
             }
         }
     }

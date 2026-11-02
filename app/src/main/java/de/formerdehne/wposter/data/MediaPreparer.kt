@@ -176,6 +176,21 @@ class MediaPreparer(private val context: Context) {
         return PreparedMedia(out, if (webm) "video/webm" else "video/mp4", out.name.substringAfter('_'), isVideo = true)
     }
 
+    /**
+     * Kopiert eine geteilte Datei sofort in den App-Speicher. Leserechte für per "Teilen"
+     * erhaltene Dateien enden, wenn die App geschlossen wird – die Kopie bleibt lesbar.
+     */
+    suspend fun stage(uri: Uri): Uri = withContext(Dispatchers.IO) {
+        val name = displayName(uri)
+        val mime = resolver.getType(uri)
+        val ext = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mime)
+        val fileName = if (ext != null && !name.contains('.')) "$name.$ext" else name
+        val out = File(stageDir(context).apply { mkdirs() }, "${System.nanoTime()}_" +
+            fileName.replace(Regex("[^A-Za-z0-9._-]"), "_").takeLast(80))
+        open(uri).use { input -> FileOutputStream(out).use { input.copyTo(it) } }
+        Uri.fromFile(out)
+    }
+
     // ---------- Hilfsfunktionen ----------
 
     private fun copyAsIs(uri: Uri, fileName: String, mime: String): PreparedMedia {
@@ -187,7 +202,9 @@ class MediaPreparer(private val context: Context) {
     private fun open(uri: Uri) = resolver.openInputStream(uri)
         ?: throw WpException("Die Datei konnte nicht geöffnet werden.")
 
-    private fun displayName(uri: Uri): String = try {
+    private fun displayName(uri: Uri): String = if (uri.scheme == "file") {
+        uri.lastPathSegment?.substringAfter('_') ?: "medium"
+    } else try {
         resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
             if (c.moveToFirst()) c.getString(0) else null
         }
@@ -213,9 +230,18 @@ class MediaPreparer(private val context: Context) {
 
     companion object {
         private fun workDir(context: Context) = File(context.cacheDir, "uploads").apply { mkdirs() }
+        private fun stageDir(context: Context) = File(context.cacheDir, "shared")
 
         fun clearWorkDir(context: Context) {
             workDir(context).listFiles()?.forEach { it.delete() }
+            stageDir(context).listFiles()?.forEach { it.delete() }
+        }
+
+        /** Gestagte Kopie löschen (nur Dateien im eigenen Zwischenspeicher). */
+        fun deleteStaged(context: Context, uri: Uri) {
+            if (uri.scheme != "file") return
+            val file = File(uri.path ?: return)
+            if (file.parentFile == stageDir(context)) file.delete()
         }
     }
 }

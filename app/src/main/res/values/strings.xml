@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">WPoster</string>
-    <string name="share_label">Mit WPoster veröffentlichen</string>
+    <string name="app_name" translatable="false">WPoster</string>
+    <string name="share_label">Post with WPoster</string>
+
+    <string name="channel_uploads">Uploads in progress</string>
+    <string name="channel_upload_results">Upload results</string>
+    <string name="upload_notification_title">Uploading photos &amp; videos …</string>
+    <string name="upload_notification_text">File %1$d of %2$d</string>
+    <string name="upload_done_title">Uploads complete</string>
+    <string name="upload_done_text">Tap to finish and publish your post.</string>
+    <string name="upload_failed_title">Upload failed</string>
+    <string name="upload_failed_text">%1$d file(s) could not be uploaded. Tap to retry.</string>
 </resources>

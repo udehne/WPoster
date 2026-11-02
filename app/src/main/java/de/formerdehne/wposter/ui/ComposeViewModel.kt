@@ -62,7 +62,8 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
     fun setBefore(v: String) = _state.update { it.copy(before = v) }
     fun setAfter(v: String) = _state.update { it.copy(after = v) }
 
-    fun addMedia(uris: List<Uri>) {
+    /** [stage] = true für per "Teilen" erhaltene Dateien: erst in den App-Speicher kopieren. */
+    fun addMedia(uris: List<Uri>, stage: Boolean = false) {
         val resolver = getApplication<Application>().contentResolver
         val known = _state.value.items.map { it.uri }.toSet()
         val newItems = uris.filter { it !in known }.map { uri ->
@@ -74,7 +75,26 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
         }
         if (newItems.isEmpty()) return
         _state.update { it.copy(items = it.items + newItems, published = null) }
-        newItems.forEach { startUpload(it.key) }
+        if (!stage) {
+            newItems.forEach { startUpload(it.key) }
+            return
+        }
+        newItems.forEach { item ->
+            jobs[item.key] = viewModelScope.launch {
+                try {
+                    val staged = uploader.stage(item.uri)
+                    updateItem(item.key) { it.copy(uri = staged) }
+                    jobs.remove(item.key)
+                    startUpload(item.key)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    updateItem(item.key) {
+                        it.copy(state = ItemState.FAILED, error = "Die Datei konnte nicht gelesen werden.")
+                    }
+                }
+            }
+        }
     }
 
     private fun startUpload(key: Long) {
@@ -122,6 +142,7 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
         jobs.remove(key)?.cancel()
         val item = _state.value.items.find { it.key == key } ?: return
         _state.update { s -> s.copy(items = s.items.filterNot { it.key == key }) }
+        uploader.releaseStaged(item.uri)
         item.uploaded?.let { deleteRemote(listOf(it.id)) }
     }
 
@@ -149,6 +170,7 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
                 val featured = media.firstOrNull { it.isImage }?.id
                 val post = WpClient(credentials).createPost(s.title.trim(), content, featured)
                 // Entwurf leeren, Ergebnis für die Erfolgsseite behalten.
+                _state.value.items.forEach { uploader.releaseStaged(it.uri) }
                 _state.value = DraftState(published = post)
             } catch (e: CancellationException) {
                 throw e
@@ -160,6 +182,7 @@ class ComposeViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Neuer, leerer Entwurf (z. B. nach erfolgreichem Veröffentlichen). */
     fun reset() {
+        _state.value.items.forEach { uploader.releaseStaged(it.uri) }
         jobs.values.forEach { it.cancel() }
         jobs.clear()
         _state.value = DraftState()
